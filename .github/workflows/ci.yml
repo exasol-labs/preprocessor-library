@@ -1,0 +1,135 @@
+# CI workflow for preprocessor-library
+#
+# Two jobs:
+#   drift-check — installs the framework package and regenerates
+#                 registry/index.json from modules/*/module.toml plus
+#                 registry/external/*.toml; fails if the committed file is
+#                 out of sync. No database needed, always runs.
+#   test         — installs the framework package, boots a docker Exasol
+#                 (same image the framework's own CI uses), installs the
+#                 framework core into it, and runs every module's tests/
+#                 (plus the top-level tests/test_scaffolding.py).
+#
+# The framework is not published to PyPI yet, so it is installed straight
+# from its GitHub repo, pinned to `main`.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  FRAMEWORK_REF: main
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # drift-check: registry/index.json must always match modules/*/module.toml
+  # and registry/external/*.toml
+  # ---------------------------------------------------------------------------
+  drift-check:
+    name: Registry index drift check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the framework package
+        run: |
+          pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}"
+
+      - name: Check registry/index.json is in sync
+        run: |
+          python - <<'EOF'
+          import sys
+          from pathlib import Path
+
+          from preproc.module.registry import index_drift
+
+          drift = index_drift(Path("."))
+          if drift:
+              for line in drift:
+                  print(f"::error::{line}")
+              sys.exit(1)
+          print("registry/index.json is in sync.")
+          EOF
+
+  # ---------------------------------------------------------------------------
+  # test: every module's tests/ against a docker Exasol with the framework
+  # installed
+  # ---------------------------------------------------------------------------
+  test:
+    name: Module tests (docker Exasol)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the framework package and test dependencies
+        run: |
+          pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" pytest
+
+      # Start the Exasol database container — same image and flags the
+      # framework repo's own CI uses.
+      - name: Start Exasol docker-db
+        run: |
+          docker run -d \
+            --name exasol \
+            --privileged \
+            -p 8563:8563 \
+            exasol/docker-db:latest-8
+
+      # Poll until the database is ready to accept connections.
+      - name: Wait for Exasol to be ready
+        run: |
+          python - <<'EOF'
+          import time, sys
+          import pyexasol
+
+          dsn      = "localhost:8563"
+          user     = "sys"
+          password = "exasol"
+          timeout  = 600   # seconds — docker-db is slow on a cold runner
+          interval = 10    # seconds between polls
+          deadline = time.time() + timeout
+
+          print("Waiting for Exasol to accept connections …", flush=True)
+          while time.time() < deadline:
+              try:
+                  conn = pyexasol.connect(
+                      dsn=dsn, user=user, password=password,
+                      websocket_sslopt={"cert_reqs": 0},
+                  )
+                  conn.close()
+                  print("Exasol is ready.", flush=True)
+                  sys.exit(0)
+              except Exception as exc:
+                  print(f"  not ready yet ({exc}); retrying in {interval}s …", flush=True)
+                  time.sleep(interval)
+
+          print("ERROR: Exasol did not become ready within the timeout.", file=sys.stderr)
+          sys.exit(1)
+          EOF
+
+      # Run every module's tests/ plus the top-level scaffolding tests.
+      - name: Run pytest
+        env:
+          EXASOL_DSN: "localhost:8563"
+          EXASOL_USER: sys
+          EXASOL_PASSWORD: exasol
+          # Disable TLS verification — docker-db uses a self-signed certificate.
+          EXASOL_TLS_VERIFY: "0"
+        run: pytest -v

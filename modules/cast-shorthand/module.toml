@@ -1,0 +1,13 @@
+name = "cast-shorthand"
+description = "Rewrites PostgreSQL-style expr::type cast shorthand to CAST(expr AS type)."
+phase = "TRANSLATE"
+script_name = "PREPROC_RT.CAST_SHORTHAND_V1"
+function = "cast_shorthand"
+version = 1
+min_framework = "0.3.0"
+sha256 = "1ff0c225ae0d0988283ab9f16de394af7546fe870ce9b6c9493ed9a531339ada"
+deploy_mode = "library-deployed"
+
+[suggested_scope]
+type = "ROLE"
+value = "PREPROC_ADMIN"

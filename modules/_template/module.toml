@@ -1,0 +1,31 @@
+# =============================================================================
+# TEMPLATE module.toml
+# =============================================================================
+# Copy this whole modules/_template/ directory to modules/<your-module-name>/,
+# rename its files, and replace every value below with your own. The full
+# field reference lives in docs/module-authoring.md in the
+# preprocessor-framework repo ("module.toml schema").
+#
+# NOTE for template maintainers: this manifest is intentionally a complete,
+# valid, harmless module (a TRANSLATE no-op) rather than a stub — the
+# registry generator auto-indexes every modules/*/module.toml it finds, so a
+# deliberately-invalid template would break `preproc module list` / CI's
+# index regeneration for every module, not just this one. `name` here MUST
+# keep matching this directory's name (`_template`) for the same reason:
+# the generator resolves the artifact file from `name`, not from the
+# directory it was found in.
+# =============================================================================
+
+name = "_template"                            # kebab-case; MUST match the modules/<name>/ directory
+description = "Placeholder TRANSLATE-phase template module. Copy this directory to start a new one."
+phase = "TRANSLATE"                           # one of: TRANSLATE, EXPAND, REWRITE
+script_name = "PREPROC_RT.TEMPLATE_MODULE_V1" # fully qualified; MUST end in _V<N>
+function = "template_module"                  # the exported Lua function name
+version = 1                                   # MUST equal the _V<N> suffix above
+min_framework = "0.3.0"                       # lowest framework release this module supports
+sha256 = "c9d06b070443c936672190b9c0deb09638160f2481095e198f9590a8d33ff9c5"  # hex digest of _template_v1.sql's bytes
+deploy_mode = "library-deployed"              # "library-deployed" or "self-deployed" (self-deployed needs [source] instead of sha256)
+
+[suggested_scope]
+type = "ROLE"                                 # "ROLE" or "USER"
+value = "PREPROC_ADMIN"                       # a default scope suggestion; the operator may deploy with a different scope

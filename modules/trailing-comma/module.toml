@@ -1,0 +1,13 @@
+name = "trailing-comma"
+description = "Removes trailing commas before ')' or a list-terminating keyword."
+phase = "TRANSLATE"
+script_name = "PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"
+function = "trailing_comma"
+version = 1
+min_framework = "0.3.0"
+sha256 = "50358aa93f35f9cd95d443e0c13e8984f2686986de0a074d4b313d32a54be606"
+deploy_mode = "library-deployed"
+
+[suggested_scope]
+type = "ROLE"
+value = "PREPROC_ADMIN"
