@@ -92,7 +92,7 @@ PREPROC INSTALL MODULE cast-shorthand
   FOR ROLE ANALYSTS;
 ```
 
-Pin `<ref>` to a tag (e.g. `v0.1.0`) rather than a moving branch. Supplying an
+Pin `<ref>` to a tag (e.g. `v0.1.1`) rather than a moving branch. Supplying an
 `https:` source *is* the opt-in — there is no toggle. On a no-egress cluster an
 `https:` source fails with a network error and installs nothing (use BucketFS
 below instead).
@@ -127,8 +127,8 @@ Build the release tarball, upload it into a bucket, and install off that bucket
 4. **Install**, naming the archive exactly as uploaded:
 
    ```sql
-   PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.0.tar.gz';
-   PREPROC INSTALL MODULE cast-shorthand FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.0.tar.gz' FOR ROLE ANALYSTS;
+   PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz';
+   PREPROC INSTALL MODULE cast-shorthand FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz' FOR ROLE ANALYSTS;
    ```
 
 See the framework's
