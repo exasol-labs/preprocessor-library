@@ -58,6 +58,83 @@ for the full CLI reference and the air-gap flow, and
 [docs/module-authoring.md](https://github.com/exasol-labs/preprocessor-framework/blob/main/docs/module-authoring.md)
 for the module contract (writing your own).
 
+## Installing in-database (no CLI, no toolchain)
+
+`preprocessor-framework` **v0.5.0+** adds a SQL-only install path: a DBA holding
+`PREPROC_ADMIN` installs a module with a single statement, no `preproc` CLI and
+no Python/uv on the operator side. The database reads and integrity-verifies the
+module (sha256 + a single `CREATE OR REPLACE LUA SCRIPT` matching the declared
+`script_name`) and registers its activation rule in one step. There are two
+sources — pick by whether the database has outbound internet.
+
+Discover first (read-only), then install:
+
+```sql
+PREPROC CATALOG MODULES FROM '<source>';
+PREPROC INSTALL MODULE <name> FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
+```
+
+`<name>` and the scope value are bare words; the source is single-quoted. Scope
+targets rule **activation** (who receives the transform), not install permission
+— installing is always the `PREPROC_ADMIN` boundary.
+
+### From the internet (HTTPS)
+
+Point at this repo's `registry/index.json` served at a raw URL. Artifacts are
+fetched relative to the index, so no separate build step is needed — the repo is
+already laid out for it. The repo (or a fork) must be **public** so the cluster
+can fetch it anonymously:
+
+```sql
+PREPROC CATALOG MODULES FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json';
+PREPROC INSTALL MODULE cast-shorthand
+  FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json'
+  FOR ROLE ANALYSTS;
+```
+
+Pin `<ref>` to a tag (e.g. `v0.1.0`) rather than a moving branch. Supplying an
+`https:` source *is* the opt-in — there is no toggle. On a no-egress cluster an
+`https:` source fails with a network error and installs nothing (use BucketFS
+below instead).
+
+### Locally via BucketFS (air-gapped, no egress)
+
+Build the release tarball, upload it into a bucket, and install off that bucket
+— the database performs no network I/O.
+
+1. **Build** the tarball (stdlib-only, no framework needed):
+
+   ```
+   python3 scripts/build_release.py            # writes dist/preproc-lib-<VERSION>.tar.gz
+   ```
+
+   The archive holds `registry/index.json` plus each library-deployed artifact
+   at its `modules/<name>/<name>_v<N>.sql` path — exactly the layout the resolver
+   reads. The build re-verifies every artifact's sha256 against the index as it
+   packs, and is byte-reproducible.
+
+2. **Upload** `dist/preproc-lib-<ver>.tar.gz` into your BucketFS bucket (any
+   BucketFS client / `curl` PUT to the write service). BucketFS auto-extracts it.
+
+3. **Create a CONNECTION** naming that bucket and grant the admin role access
+   (the framework never creates it — the operator does; the name is arbitrary):
+
+   ```sql
+   CREATE CONNECTION PREPROC_BFS TO 'https://<bucketfs-host>:2581/<bucket>' USER '<user>' IDENTIFIED BY '<pw>';
+   GRANT ACCESS ON CONNECTION PREPROC_BFS TO PREPROC_ADMIN;
+   ```
+
+4. **Install**, naming the archive exactly as uploaded:
+
+   ```sql
+   PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.0.tar.gz';
+   PREPROC INSTALL MODULE cast-shorthand FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.0.tar.gz' FOR ROLE ANALYSTS;
+   ```
+
+See the framework's
+[docs/operations.md § In-database module install](https://github.com/exasol-labs/preprocessor-framework/blob/main/docs/operations.md#module-management)
+for the CONNECTION setup, result columns, and the admin boundary in full.
+
 ## Contributing a module
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for both ways to add a module here: a

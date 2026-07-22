@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Build output of scripts/build_release.py (release tarballs are attached to
+# GitHub Releases, not committed).
+dist/
+
+# Local tooling caches.
+.serena/

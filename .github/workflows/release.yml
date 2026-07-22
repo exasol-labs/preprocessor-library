@@ -1,0 +1,44 @@
+# Release workflow for preprocessor-library
+#
+# On a v* tag, build the BucketFS release tarball (scripts/build_release.py)
+# and attach it to the GitHub Release. The tarball is the artifact the
+# framework's in-database installer consumes off BucketFS:
+#   PREPROC INSTALL MODULE <name> FROM 'bucketfs:<CONN>/preproc-lib-<ver>.tar.gz' ...
+# The build is stdlib-only, so no framework install is needed here.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-tarball:
+    name: Build and publish release tarball
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Derive the version from the tag (strip a leading 'v') so the tarball
+      # name matches the release, regardless of the committed VERSION file.
+      - name: Build the release tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python3 scripts/build_release.py --version "$VERSION"
+          echo "TARBALL=dist/preproc-lib-${VERSION}.tar.gz" >> "$GITHUB_ENV"
+
+      - name: Attach the tarball to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
