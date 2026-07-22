@@ -1,24 +1,32 @@
-# Release workflow for preprocessor-library
+# Release-package workflow for preprocessor-library
 #
-# On a v* tag, build the BucketFS release tarball (scripts/build_release.py)
-# and attach it to the GitHub Release. The tarball is the artifact the
-# framework's in-database installer consumes off BucketFS:
+# Builds the BucketFS release tarball (scripts/build_release.py) — the artifact
+# the framework's in-database installer consumes off BucketFS:
 #   PREPROC INSTALL MODULE <name> FROM 'bucketfs:<CONN>/preproc-lib-<ver>.tar.gz' ...
-# The build is stdlib-only, so no framework install is needed here.
+#
+# The build is STDLIB-ONLY (it never installs or imports the framework), so it
+# runs green while BOTH repos stay private — no token, no public repo. It runs:
+#   * on every push / PR  -> build + upload the tarball as a downloadable CI
+#                            artifact (validates the package on every change)
+#   * on a v* tag         -> additionally attach the tarball to the GitHub Release
+#   * manually            -> workflow_dispatch, to cut a package on demand
+#
+# (The separate ci.yml drift-check and module-test jobs DO need the framework
+# package and are a distinct concern from building the release package.)
 
-name: Release
+name: Release package
 
 on:
   push:
-    tags:
-      - "v*"
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build-tarball:
-    name: Build and publish release tarball
+    name: Build release tarball
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,16 +37,27 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Derive the version from the tag (strip a leading 'v') so the tarball
-      # name matches the release, regardless of the committed VERSION file.
+      # On a tag, derive the version from the tag (strip a leading 'v') so the
+      # tarball name matches the release; otherwise use the committed VERSION.
       - name: Build the release tarball
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(cat VERSION)"
+          fi
           python3 scripts/build_release.py --version "$VERSION"
           echo "TARBALL=dist/preproc-lib-${VERSION}.tar.gz" >> "$GITHUB_ENV"
 
-      - name: Attach the tarball to the GitHub Release
+      - name: Upload the tarball as a CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preproc-lib-tarball
+          path: ${{ env.TARBALL }}
+          if-no-files-found: error
+
+      - name: Attach the tarball to the GitHub Release (v* tags only)
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
+        run: gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber

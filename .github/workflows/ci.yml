@@ -10,8 +10,13 @@
 #                 framework core into it, and runs every module's tests/
 #                 (plus the top-level tests/test_scaffolding.py).
 #
-# The framework is not published to PyPI yet, so it is installed straight
-# from its GitHub repo, pinned to `main`.
+# The framework is not published to PyPI yet, so it is installed straight from
+# its GitHub repo, pinned to `main`. That repo is PRIVATE, so both jobs install
+# it with an optional FRAMEWORK_TOKEN secret (a PAT or GitHub App token with
+# read access to it). When the secret is absent these framework-dependent checks
+# skip cleanly and the pipeline stays green; add the secret to turn them on. The
+# release-package build lives in release.yml and needs neither the framework nor
+# a token (it is stdlib-only).
 
 name: CI
 
@@ -41,11 +46,25 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The framework repo is private, so an anonymous clone cannot install it.
+      # Authenticate with an optional FRAMEWORK_TOKEN secret (a PAT or GitHub App
+      # token with read access to exasol-labs/preprocessor-framework). When the
+      # secret is not configured, skip the framework-dependent check cleanly so
+      # the pipeline stays green — the release-package build (release.yml) is
+      # stdlib-only and validates the artifacts independently.
       - name: Install the framework package
+        env:
+          FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
         run: |
-          pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}"
+          if [ -z "$FRAMEWORK_TOKEN" ]; then
+            echo "::notice::FRAMEWORK_TOKEN not set — skipping the framework-dependent drift check."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}"
 
       - name: Check registry/index.json is in sync
+        if: env.SKIP != '1'
         run: |
           python - <<'EOF'
           import sys
@@ -78,13 +97,23 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Needs the private framework package (see the drift-check note). Skips the
+      # DB-backed module tests cleanly when FRAMEWORK_TOKEN is not configured.
       - name: Install the framework package and test dependencies
+        env:
+          FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
         run: |
-          pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" pytest
+          if [ -z "$FRAMEWORK_TOKEN" ]; then
+            echo "::notice::FRAMEWORK_TOKEN not set — skipping the framework-dependent module tests."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" pytest
 
       # Start the Exasol database container — same image and flags the
       # framework repo's own CI uses.
       - name: Start Exasol docker-db
+        if: env.SKIP != '1'
         run: |
           docker run -d \
             --name exasol \
@@ -94,6 +123,7 @@ jobs:
 
       # Poll until the database is ready to accept connections.
       - name: Wait for Exasol to be ready
+        if: env.SKIP != '1'
         run: |
           python - <<'EOF'
           import time, sys
@@ -126,6 +156,7 @@ jobs:
 
       # Run every module's tests/ plus the top-level scaffolding tests.
       - name: Run pytest
+        if: env.SKIP != '1'
         env:
           EXASOL_DSN: "localhost:8563"
           EXASOL_USER: sys
