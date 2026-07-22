@@ -56,8 +56,16 @@ jobs:
           path: ${{ env.TARBALL }}
           if-no-files-found: error
 
-      - name: Attach the tarball to the GitHub Release (v* tags only)
+      - name: Publish the tarball to the GitHub Release (v* tags only)
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
+        run: |
+          # Create the Release if the tag has none yet, otherwise attach/replace
+          # the asset on the existing one.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$TARBALL" \
+              --title "$GITHUB_REF_NAME" --generate-notes
+          fi
