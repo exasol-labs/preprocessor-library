@@ -71,12 +71,16 @@ Discover first (read-only), then install:
 
 ```sql
 PREPROC CATALOG MODULES FROM '<source>';
-PREPROC INSTALL MODULE <name> FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
+PREPROC INSTALL MODULE "<name>" FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
 ```
 
-`<name>` and the scope value are bare words; the source is single-quoted. Scope
-targets rule **activation** (who receives the transform), not install permission
-— installing is always the `PREPROC_ADMIN` boundary.
+The command follows **Exasol identifier quoting**: the module name is an
+object-name identifier, so an unquoted name folds to UPPER CASE — double-quote a
+lowercase registry key like `"cast-shorthand"` to keep its case. The `FOR
+ROLE|USER` value is a role/user name and is always upper-cased (`dba`, `DBA`,
+`"dba"` all mean `DBA`). The source is a single-quoted string. Scope targets rule
+**activation** (who receives the transform), not install permission — installing
+is always the `PREPROC_ADMIN` boundary.
 
 ### From the internet (HTTPS)
 
@@ -87,7 +91,7 @@ can fetch it anonymously:
 
 ```sql
 PREPROC CATALOG MODULES FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json';
-PREPROC INSTALL MODULE cast-shorthand
+PREPROC INSTALL MODULE "cast-shorthand"
   FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json'
   FOR ROLE ANALYSTS;
 ```
@@ -128,7 +132,7 @@ Build the release tarball, upload it into a bucket, and install off that bucket
 
    ```sql
    PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz';
-   PREPROC INSTALL MODULE cast-shorthand FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz' FOR ROLE ANALYSTS;
+   PREPROC INSTALL MODULE "cast-shorthand" FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz' FOR ROLE ANALYSTS;
    ```
 
 See the framework's
