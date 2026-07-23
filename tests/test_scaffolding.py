@@ -74,14 +74,14 @@ def _assert_conformant_module(name: str, *, script_name: str) -> None:
 
 
 def test_cast_shorthand_module_present_and_conformant():
-    """cast-shorthand is a complete module with the expected script identity."""
-    _assert_conformant_module("cast-shorthand", script_name="PREPROC_RT.CAST_SHORTHAND_V1")
+    """cast_shorthand is a complete module with the expected script identity."""
+    _assert_conformant_module("cast_shorthand", script_name="PREPROC_RT.CAST_SHORTHAND_V1")
 
 
 def test_trailing_comma_module_present_and_conformant():
-    """trailing-comma is a complete module with the expected script identity."""
+    """trailing_comma is a complete module with the expected script identity."""
     _assert_conformant_module(
-        "trailing-comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"
+        "trailing_comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"
     )
 
 
@@ -102,8 +102,8 @@ def test_index_lists_cast_shorthand_and_trailing_comma():
     """registry/index.json contains both migrated ergonomics modules."""
     index = generate_index(_REPO_ROOT)
     names = {entry.name for entry in index.entries}
-    assert "cast-shorthand" in names
-    assert "trailing-comma" in names
+    assert "cast_shorthand" in names
+    assert "trailing_comma" in names
 
 
 def test_index_regeneration_is_byte_identical_to_committed():

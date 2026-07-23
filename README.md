@@ -7,7 +7,7 @@ multiplexes it to every registered syntax/policy provider via `PREPROC_RT.MASTER
 Exasol exposes exactly **one** preprocessor slot per database (and one per
 session). The framework claims that slot once and dispatches to as many
 independent modules as are registered against it, so unrelated preprocessing
-needs — cast shorthand, trailing-comma tolerance, a whole external subsystem's
+needs — cast shorthand, trailing comma tolerance, a whole external subsystem's
 front door — never have to fight over it. This repo is where those modules
 live: a federated catalog of `fn(text) -> nil|string` Lua scripts, each with a
 manifest describing what it does and how to deploy it.
@@ -29,9 +29,9 @@ registry/external/            # curated entries for modules hosted in OTHER repo
 Two modules ship today, both migrated from `preprocessor-framework`'s old
 `examples/` directory as the proving case for this library:
 
-* **[cast-shorthand](modules/cast-shorthand/)** — PostgreSQL-style
+* **[cast_shorthand](modules/cast_shorthand/)** — PostgreSQL-style
   `expr::type` → `CAST(expr AS type)`.
-* **[trailing-comma](modules/trailing-comma/)** — removes trailing commas
+* **[trailing_comma](modules/trailing_comma/)** — removes trailing commas
   before `)` or a list-terminating keyword.
 
 ## Using a module
@@ -44,7 +44,7 @@ connection (`EXASOL_DSN`/`EXASOL_USER`/`EXASOL_PASSWORD`, see the framework's
 
 ```
 uv run preproc module list --registry /path/to/preprocessor-library
-uv run preproc module add cast-shorthand --registry /path/to/preprocessor-library
+uv run preproc module add cast_shorthand --registry /path/to/preprocessor-library
 ```
 
 `--registry` also accepts a pinned `https://` URL to a hosted
@@ -71,12 +71,13 @@ Discover first (read-only), then install:
 
 ```sql
 PREPROC CATALOG MODULES FROM '<source>';
-PREPROC INSTALL MODULE "<name>" FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
+PREPROC INSTALL MODULE <name> FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
 ```
 
-The command follows **Exasol identifier quoting**: the module name is an
-object-name identifier, so an unquoted name folds to UPPER CASE — double-quote a
-lowercase registry key like `"cast-shorthand"` to keep its case. The `FOR
+The command follows **Exasol identifier rules**. Module names are
+identifier-safe (letters, digits, underscores — no hyphens) and matched
+case-insensitively, so write them unquoted in any case (`cast_shorthand`,
+`CAST_SHORTHAND`, and `"cast_shorthand"` all resolve the same module). The `FOR
 ROLE|USER` value is a role/user name and is always upper-cased (`dba`, `DBA`,
 `"dba"` all mean `DBA`). The source is a single-quoted string. Scope targets rule
 **activation** (who receives the transform), not install permission — installing
@@ -91,12 +92,12 @@ can fetch it anonymously:
 
 ```sql
 PREPROC CATALOG MODULES FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json';
-PREPROC INSTALL MODULE "cast-shorthand"
+PREPROC INSTALL MODULE cast_shorthand
   FROM 'https://raw.githubusercontent.com/<owner>/preprocessor-library/<ref>/registry/index.json'
   FOR ROLE ANALYSTS;
 ```
 
-Pin `<ref>` to a tag (e.g. `v0.1.1`) rather than a moving branch. Supplying an
+Pin `<ref>` to a tag (e.g. `v0.2.0`) rather than a moving branch. Supplying an
 `https:` source *is* the opt-in — there is no toggle. On a no-egress cluster an
 `https:` source fails with a network error and installs nothing (use BucketFS
 below instead).
@@ -131,8 +132,8 @@ Build the release tarball, upload it into a bucket, and install off that bucket
 4. **Install**, naming the archive exactly as uploaded:
 
    ```sql
-   PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz';
-   PREPROC INSTALL MODULE "cast-shorthand" FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.1.1.tar.gz' FOR ROLE ANALYSTS;
+   PREPROC CATALOG MODULES FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.2.0.tar.gz';
+   PREPROC INSTALL MODULE cast_shorthand FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.2.0.tar.gz' FOR ROLE ANALYSTS;
    ```
 
 See the framework's

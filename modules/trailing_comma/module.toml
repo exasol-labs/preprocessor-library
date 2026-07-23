@@ -1,4 +1,4 @@
-name = "trailing-comma"
+name = "trailing_comma"
 description = "Removes trailing commas before ')' or a list-terminating keyword."
 phase = "TRANSLATE"
 script_name = "PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"

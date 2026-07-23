@@ -1,4 +1,4 @@
-# trailing-comma
+# trailing_comma
 
 A TRANSLATE-phase preprocessor module that removes trailing commas from SQL
 statements before the Exasol engine compiles them. Exasol rejects a trailing
@@ -39,13 +39,13 @@ comma inside any of them is never removed. The module adds no defensive
 ## Install
 
 ```
-uv run preproc module add trailing-comma --registry /path/to/preprocessor-library
+uv run preproc module add trailing_comma --registry /path/to/preprocessor-library
 ```
 
 or, for an air-gapped database, bundle it for hand-carry:
 
 ```
-uv run preproc module bundle trailing-comma --output trailing_comma.sql --registry /path/to/preprocessor-library
+uv run preproc module bundle trailing_comma --output trailing_comma.sql --registry /path/to/preprocessor-library
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may

@@ -1,9 +1,9 @@
-"""Tests for cast-shorthand: PostgreSQL-style expr::type cast shorthand.
+"""Tests for cast_shorthand: PostgreSQL-style expr::type cast shorthand.
 
 Harness approach
 ----------------
 The module under test is deployed from its canonical artifact,
-``cast-shorthand_v1.sql`` (one ``CREATE OR REPLACE LUA SCRIPT`` statement). To
+``cast_shorthand_v1.sql`` (one ``CREATE OR REPLACE LUA SCRIPT`` statement). To
 capture its exact string output we also deploy a thin DB-side Lua harness that
 calls the module function and returns the rewritten text as a single-row,
 single-column table — the only way to assert byte-for-byte exact output,
@@ -25,7 +25,7 @@ from preproc.module.manifest import (
 )
 
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_ARTIFACT = _MODULE_DIR / "cast-shorthand_v1.sql"
+_ARTIFACT = _MODULE_DIR / "cast_shorthand_v1.sql"
 _MANIFEST_PATH = _MODULE_DIR / "module.toml"
 _MODULE_SCRIPT = "PREPROC_RT.CAST_SHORTHAND_V1"
 _HARNESS_SCRIPT = "PREPROC_RT.CAST_SHORTHAND_TEST_HARNESS"
@@ -43,7 +43,7 @@ def _sql_escape(text: str) -> str:
 
 
 def _harness_call(conn, input_text: str) -> str:
-    """Call the cast-shorthand harness and return the single string result."""
+    """Call the cast_shorthand harness and return the single string result."""
     escaped = _sql_escape(input_text)
     rows = conn.execute(f"EXECUTE SCRIPT {_HARNESS_SCRIPT}('{escaped}')").fetchall()
     return rows[0][0]
@@ -51,7 +51,7 @@ def _harness_call(conn, input_text: str) -> str:
 
 @pytest.fixture(scope="module")
 def cast_harness(installed):
-    """Deploy the cast-shorthand artifact and a thin harness; tear down on exit."""
+    """Deploy the cast_shorthand artifact and a thin harness; tear down on exit."""
     conn = installed
     conn.execute(_create_statement())
     harness_body = (

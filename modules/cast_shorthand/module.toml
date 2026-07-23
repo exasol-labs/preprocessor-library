@@ -1,4 +1,4 @@
-name = "cast-shorthand"
+name = "cast_shorthand"
 description = "Rewrites PostgreSQL-style expr::type cast shorthand to CAST(expr AS type)."
 phase = "TRANSLATE"
 script_name = "PREPROC_RT.CAST_SHORTHAND_V1"

@@ -1,4 +1,4 @@
-# cast-shorthand
+# cast_shorthand
 
 A TRANSLATE-phase preprocessor module that rewrites PostgreSQL-style
 `expr::type` cast shorthand to `CAST(expr AS type)` before the Exasol engine
@@ -45,13 +45,13 @@ phase `TRANSLATE`.
 ## Install
 
 ```
-uv run preproc module add cast-shorthand --registry /path/to/preprocessor-library
+uv run preproc module add cast_shorthand --registry /path/to/preprocessor-library
 ```
 
 or, for an air-gapped database, bundle it for hand-carry:
 
 ```
-uv run preproc module bundle cast-shorthand --output cast_shorthand.sql --registry /path/to/preprocessor-library
+uv run preproc module bundle cast_shorthand --output cast_shorthand.sql --registry /path/to/preprocessor-library
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may

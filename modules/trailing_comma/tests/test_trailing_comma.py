@@ -1,9 +1,9 @@
-"""Tests for trailing-comma: opt-in trailing-comma removal.
+"""Tests for trailing_comma: opt-in trailing_comma removal.
 
 Harness approach
 ----------------
 The module under test is deployed from its canonical artifact,
-``trailing-comma_v1.sql`` (one ``CREATE OR REPLACE LUA SCRIPT`` statement). To
+``trailing_comma_v1.sql`` (one ``CREATE OR REPLACE LUA SCRIPT`` statement). To
 capture its exact string output we also deploy a thin DB-side Lua harness that
 calls the module function and returns the rewritten text as a single-row,
 single-column table — the only way to assert byte-for-byte exact output,
@@ -15,7 +15,7 @@ module-scoped fixture so they cannot pollute any other test in the session.
 
 Fail-closed note
 -----------------
-trailing-comma has no internal error path that can produce corrupted output:
+trailing_comma has no internal error path that can produce corrupted output:
 the scanner only skips or appends characters, and ``is_trailing`` returns a
 boolean that selects between two branches that both produce valid results.
 The fail-closed test therefore asserts graceful handling of a
@@ -34,7 +34,7 @@ from preproc.module.manifest import (
 )
 
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_ARTIFACT = _MODULE_DIR / "trailing-comma_v1.sql"
+_ARTIFACT = _MODULE_DIR / "trailing_comma_v1.sql"
 _MANIFEST_PATH = _MODULE_DIR / "module.toml"
 _MODULE_SCRIPT = "PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"
 _HARNESS_SCRIPT = "PREPROC_RT.TRAILING_COMMA_TEST_HARNESS"
@@ -52,7 +52,7 @@ def _sql_escape(text: str) -> str:
 
 
 def _harness_call(conn, input_text: str) -> str:
-    """Call the trailing-comma harness and return the single string result."""
+    """Call the trailing_comma harness and return the single string result."""
     escaped = _sql_escape(input_text)
     rows = conn.execute(f"EXECUTE SCRIPT {_HARNESS_SCRIPT}('{escaped}')").fetchall()
     return rows[0][0]
@@ -60,7 +60,7 @@ def _harness_call(conn, input_text: str) -> str:
 
 @pytest.fixture(scope="module")
 def tc_harness(installed):
-    """Deploy the trailing-comma artifact and a thin harness; tear down on exit."""
+    """Deploy the trailing_comma artifact and a thin harness; tear down on exit."""
     conn = installed
     conn.execute(_create_statement())
     harness_body = (

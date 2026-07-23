@@ -24,7 +24,7 @@ Use this when your module's whole artifact can live in this repo.
    `suggested_scope`, `deploy_mode = "library-deployed"`, and `sha256` — the
    hex digest of your artifact file's bytes (`sha256sum <name>_v1.sql`).
 4. Write `README.md` describing what your module does, its behaviour, and how
-   to install it (see `modules/cast-shorthand/README.md` for the shape).
+   to install it (see `modules/cast_shorthand/README.md` for the shape).
 5. Write `tests/` — at minimum, a static test that your manifest parses and
    your artifact's script name and sha256 match it (see
    `src/preproc/module/manifest.py`'s `load_manifest` /
