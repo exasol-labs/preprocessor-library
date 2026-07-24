@@ -69,3 +69,14 @@ jobs:
             gh release create "$GITHUB_REF_NAME" "$TARBALL" \
               --title "$GITHUB_REF_NAME" --generate-notes
           fi
+
+      # Move the mutable `latest` tag to this release commit so the HTTPS install
+      # URL can pin <ref>=latest and always resolve to the newest release (index
+      # + artifacts move together, so the sha256 integrity check still holds).
+      # Gated to the tag event: `latest` advances only at tested release
+      # boundaries, never on every push to a branch.
+      - name: Move the `latest` tag to this release (v* tags only)
+        if: github.ref_type == 'tag'
+        run: |
+          git tag -f latest "$GITHUB_REF_NAME"
+          git push -f origin latest
