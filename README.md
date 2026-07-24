@@ -97,10 +97,20 @@ PREPROC INSTALL MODULE cast_shorthand
   FOR ROLE ANALYSTS;
 ```
 
-Pin `<ref>` to a tag (e.g. `v0.2.0`) rather than a moving branch. Supplying an
-`https:` source *is* the opt-in — there is no toggle. On a no-egress cluster an
-`https:` source fails with a network error and installs nothing (use BucketFS
-below instead).
+For `<ref>`, use `latest` to always resolve the newest release — the release
+workflow moves a mutable `latest` tag to each `v*` release commit, so the URL
+stays stable while tracking releases (not every push to a branch):
+
+```sql
+PREPROC CATALOG MODULES FROM 'https://raw.githubusercontent.com/exasol-labs/preprocessor-library/latest/registry/index.json';
+```
+
+`latest` is mutable, so the same statement can resolve to different content over
+time, and raw serving is CDN-cached (~5 min) so a just-moved tag may lag briefly.
+For reproducible or audited installs, pin `<ref>` to an immutable tag (e.g.
+`v0.2.0`) instead. Supplying an `https:` source *is* the opt-in — there is no
+toggle. On a no-egress cluster an `https:` source fails with a network error and
+installs nothing (use BucketFS below instead).
 
 ### Locally via BucketFS (air-gapped, no egress)
 
