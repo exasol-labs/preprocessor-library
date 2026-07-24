@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "library_version": "0.2.0",
   "modules": [
     {
       "name": "cast_shorthand",
@@ -18,7 +19,7 @@
       "artifact_path": "modules/cast_shorthand/cast_shorthand_v1.sql",
       "source": {
         "repo": "exasol-labs/preprocessor-library",
-        "ref": "main"
+        "ref": "v0.2.0"
       }
     },
     {
@@ -38,7 +39,7 @@
       "artifact_path": "modules/trailing_comma/trailing_comma_v1.sql",
       "source": {
         "repo": "exasol-labs/preprocessor-library",
-        "ref": "main"
+        "ref": "v0.2.0"
       }
     }
   ]

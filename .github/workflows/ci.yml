@@ -25,7 +25,12 @@ on:
   pull_request:
 
 env:
-  FRAMEWORK_REF: main
+  # Must resolve a framework build that has the version-stamped index generator
+  # (generate_index/index_drift accept library_version) and the optional-FROM +
+  # provenance-audit install path. Tracks the framework feature branch until that
+  # work is released; repin to the release tag (the first framework release with
+  # those features) before merging this to a tagged library release.
+  FRAMEWORK_REF: feat/default-source-and-version-audit
 
 jobs:
 
@@ -63,22 +68,13 @@ jobs:
           fi
           pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}"
 
+      # scripts/generate_index.py owns the stamping convention (library_version
+      # from ./VERSION, source.ref = v<VERSION>); --check regenerates with those
+      # same values and fails on any drift, so the writer and the check can never
+      # diverge. Do NOT hand-edit registry/index.json — run the writer.
       - name: Check registry/index.json is in sync
         if: env.SKIP != '1'
-        run: |
-          python - <<'EOF'
-          import sys
-          from pathlib import Path
-
-          from preproc.module.registry import index_drift
-
-          drift = index_drift(Path("."))
-          if drift:
-              for line in drift:
-                  print(f"::error::{line}")
-              sys.exit(1)
-          print("registry/index.json is in sync.")
-          EOF
+        run: python scripts/generate_index.py --check
 
   # ---------------------------------------------------------------------------
   # test: every module's tests/ against a docker Exasol with the framework
