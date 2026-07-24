@@ -32,13 +32,20 @@ Use this when your module's whole artifact can live in this repo.
    package), plus integration tests against a real Exasol instance for your
    module's actual behaviour, using the `installed` fixture from this repo's
    root `conftest.py`.
-6. Open a PR. CI deploys your module against a docker Exasol and runs your
-   `tests/`, then regenerates `registry/index.json` and fails if the
-   committed file is out of sync — commit the regenerated index alongside
-   your module.
+6. Regenerate the index and commit it alongside your module:
 
-Do **not** hand-edit `registry/index.json` for a library-deployed module; it
-is generated from every `modules/*/module.toml`.
+   ```
+   python scripts/generate_index.py     # requires the preprocessor-framework package
+   ```
+
+   This stamps the index with the library's `library_version` (from `./VERSION`)
+   and pins each entry's `source.ref` to the matching release tag `v<VERSION>`.
+7. Open a PR. CI deploys your module against a docker Exasol, runs your
+   `tests/`, and runs `python scripts/generate_index.py --check`, failing if the
+   committed `registry/index.json` is out of sync.
+
+Do **not** hand-edit `registry/index.json` for a library-deployed module; it is
+generated from every `modules/*/module.toml` by `scripts/generate_index.py`.
 
 ## Path 2 — Register an external repo (PR into `registry/external/`)
 

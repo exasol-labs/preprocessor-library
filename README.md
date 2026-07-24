@@ -74,6 +74,22 @@ PREPROC CATALOG MODULES FROM '<source>';
 PREPROC INSTALL MODULE <name> FROM '<source>' FOR ROLE <role>;   -- or FOR USER <user>
 ```
 
+On **v0.6.0+** the `FROM '<source>'` clause is **optional**: omit it and the
+source defaults to this library's index pinned to the mutable `latest` tag
+(`exasol-labs/preprocessor-library@latest`), so the simplest install needs no
+source at all —
+
+```sql
+PREPROC CATALOG MODULES;                                   -- newest release
+PREPROC INSTALL MODULE cast_shorthand FOR ROLE ANALYSTS;   -- newest release
+```
+
+— and each install records the concrete release it resolved (`library_version`)
+and the effective source URL in `PREPROC_RT.INSTALLED_MODULES`, so a `latest`
+install stays auditable back to a fixed version (see [HTTPS](#from-the-internet-https)
+below for the `latest`-vs-pin trade-off). Supply `FROM` to use a fork, a pinned
+`vX.Y.Z`, or a BucketFS source instead.
+
 The command follows **Exasol identifier rules**. Module names are
 identifier-safe (letters, digits, underscores — no hyphens) and matched
 case-insensitively, so write them unquoted in any case (`cast_shorthand`,
