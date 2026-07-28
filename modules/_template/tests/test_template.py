@@ -13,12 +13,12 @@ import pytest
 
 from preproc.module.manifest import (
     load_manifest,
-    verify_artifact_script_name,
+    verify_artifact_inventory,
     verify_artifact_sha256,
 )
 
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_ARTIFACT = _MODULE_DIR / "_template_v1.sql"
+_ARTIFACT = _MODULE_DIR / "my_module_v1.sql"
 _MANIFEST = _MODULE_DIR / "module.toml"
 
 
@@ -26,13 +26,13 @@ def test_template_manifest_and_artifact_conform():
     """module.toml parses, and the artifact's script name and sha256 match it."""
     manifest = load_manifest(_MANIFEST)
     artifact_bytes = _ARTIFACT.read_bytes()
-    verify_artifact_script_name(manifest, artifact_bytes.decode("utf-8"))
+    verify_artifact_inventory(manifest, artifact_bytes.decode("utf-8"))
     verify_artifact_sha256(manifest, artifact_bytes)
 
 
 @pytest.mark.integration
 def test_template_passthrough(installed):
-    """Deployed, template_module(sqltext) returns its input unchanged."""
+    """Deployed, my_module(sqltext) returns its input unchanged."""
     conn = installed
     manifest = load_manifest(_MANIFEST)
     statement = _ARTIFACT.read_text(encoding="utf-8")

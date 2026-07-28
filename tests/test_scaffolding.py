@@ -11,9 +11,11 @@ preprocessor-framework).
 
 from pathlib import Path
 
+from _stamping import stamping_args
+
 from preproc.module.manifest import (
     load_manifest,
-    verify_artifact_script_name,
+    verify_artifact_inventory,
     verify_artifact_sha256,
 )
 from preproc.module.registry import generate_index, index_drift, render_index
@@ -69,7 +71,7 @@ def _assert_conformant_module(name: str, *, script_name: str) -> None:
         f"{artifact_path.name} is missing"
     )
     artifact_bytes = artifact_path.read_bytes()
-    verify_artifact_script_name(manifest, artifact_bytes.decode("utf-8"))
+    verify_artifact_inventory(manifest, artifact_bytes.decode("utf-8"))
     verify_artifact_sha256(manifest, artifact_bytes)
 
 
@@ -81,7 +83,7 @@ def test_cast_shorthand_module_present_and_conformant():
 def test_trailing_comma_module_present_and_conformant():
     """trailing_comma is a complete module with the expected script identity."""
     _assert_conformant_module(
-        "trailing_comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1"
+        "trailing_comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V2"
     )
 
 
@@ -108,10 +110,14 @@ def test_index_lists_cast_shorthand_and_trailing_comma():
 
 def test_index_regeneration_is_byte_identical_to_committed():
     """Regenerating registry/index.json from modules/ reproduces the committed file exactly."""
-    drift = index_drift(_REPO_ROOT)
+    stamping = stamping_args(_REPO_ROOT)
+    ref = stamping["ref"]
+    library_version = stamping["library_version"]
+
+    drift = index_drift(_REPO_ROOT, ref=ref, library_version=library_version)
     assert drift == [], f"registry/index.json is out of sync: {drift}"
 
-    fresh_text = render_index(generate_index(_REPO_ROOT))
+    fresh_text = render_index(generate_index(_REPO_ROOT, ref=ref, library_version=library_version))
     committed_text = (_REPO_ROOT / "registry" / "index.json").read_text(encoding="utf-8")
     assert fresh_text == committed_text
 

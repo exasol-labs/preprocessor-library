@@ -1,14 +1,21 @@
 # CI workflow for preprocessor-library
 #
 # Two jobs:
-#   drift-check — installs the framework package and regenerates
+#   drift-check — installs the framework package, regenerates
 #                 registry/index.json from modules/*/module.toml plus
-#                 registry/external/*.toml; fails if the committed file is
-#                 out of sync. No database needed, always runs.
+#                 registry/external/*.toml (fails if the committed file is out
+#                 of sync), and runs tests/test_library_modules.py, which
+#                 confirms every module's declared [[objects]] inventory
+#                 agrees with its artifact's independently parsed inventory —
+#                 the same accept/reject discipline already applied to
+#                 sha256. Neither check needs a database, so this job always
+#                 runs.
 #   test         — installs the framework package, boots a docker Exasol
 #                 (same image the framework's own CI uses), installs the
 #                 framework core into it, and runs every module's tests/
-#                 (plus the top-level tests/test_scaffolding.py).
+#                 (plus the top-level tests/, including
+#                 tests/test_library_modules.py again as part of the full
+#                 suite).
 #
 # The framework is not published to PyPI yet, so it is installed straight from
 # its GitHub repo, pinned to `main`. That repo is PRIVATE, so both jobs install
@@ -65,7 +72,7 @@ jobs:
             echo "SKIP=1" >> "$GITHUB_ENV"
             exit 0
           fi
-          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}"
+          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" pytest
 
       # scripts/generate_index.py owns the stamping convention (library_version
       # from ./VERSION, source.ref = v<VERSION>); --check regenerates with those
@@ -74,6 +81,14 @@ jobs:
       - name: Check registry/index.json is in sync
         if: env.SKIP != '1'
         run: python scripts/generate_index.py --check
+
+      # Static, no-database checks: every module's declared [[objects]]
+      # inventory (or its N=1 fallback) must agree with what tooling
+      # independently parses from its artifact, in both directions. A
+      # disagreement fails the build exactly like a sha256 mismatch does.
+      - name: Check declared object inventories match parsed artifacts
+        if: env.SKIP != '1'
+        run: python -m pytest tests/test_library_modules.py -v
 
   # ---------------------------------------------------------------------------
   # test: every module's tests/ against a docker Exasol with the framework

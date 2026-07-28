@@ -6,8 +6,14 @@ comma in any list context as a syntax error, so the rewrite is purely
 additive: a statement that is already valid Exasol SQL never contains a
 trailing comma in a list context and is never altered.
 
-Deployed script: `PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V1`, function
+Deployed script: `PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V2`, function
 `trailing_comma`, phase `TRANSLATE`.
+
+V2 fixes a bug in V1: a `CREATE ... SCRIPT` body (Python/Lua/R/Java code, not
+SQL) is now left byte-for-byte verbatim, and a comma before a call whose name
+happens to match a list-terminating keyword (e.g. `set(...)`, `into(...)`) is
+no longer treated as trailing. V1 remains published unchanged at its original
+sha256 for any install already pinned to it.
 
 ## Behaviour
 

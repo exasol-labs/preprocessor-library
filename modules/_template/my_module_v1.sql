@@ -1,7 +1,7 @@
 --/
-CREATE OR REPLACE LUA SCRIPT PREPROC_RT.TEMPLATE_MODULE_V1 AS
+CREATE OR REPLACE LUA SCRIPT PREPROC_RT.MY_MODULE_V1 AS
 -- =============================================================================
--- TEMPLATE_MODULE_V1  (PREPROC_RT.TEMPLATE_MODULE_V1)
+-- MY_MODULE_V1  (PREPROC_RT.MY_MODULE_V1)
 -- =============================================================================
 -- This is a placeholder TRANSLATE-phase module for the modules/_template/
 -- skeleton. Copy this whole modules/_template/ directory to
@@ -12,13 +12,13 @@ CREATE OR REPLACE LUA SCRIPT PREPROC_RT.TEMPLATE_MODULE_V1 AS
 -- fail-open/fail-closed rules, and the "no defensive pcall" rule.
 -- =============================================================================
 
--- luacheck: globals template_module
+-- luacheck: globals my_module
 
--- template_module(sqltext) -> sqltext, unchanged.
+-- my_module(sqltext) -> sqltext, unchanged.
 -- A TRANSLATE-phase module MUST return a string on every path. This
 -- placeholder returns the input unchanged; replace the body with your own
 -- transform.
-function template_module(sqltext)
+function my_module(sqltext)
     return sqltext
 end
 /
