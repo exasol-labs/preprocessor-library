@@ -20,7 +20,7 @@ import pytest
 
 from preproc.module.manifest import (
     load_manifest,
-    verify_artifact_script_name,
+    verify_artifact_inventory,
     verify_artifact_sha256,
 )
 
@@ -197,5 +197,5 @@ def test_cast_shorthand_manifest_and_artifact_conform():
     """module.toml parses, and the artifact's script name and sha256 match it."""
     manifest = load_manifest(_MANIFEST_PATH)
     artifact_bytes = _ARTIFACT.read_bytes()
-    verify_artifact_script_name(manifest, artifact_bytes.decode("utf-8"))
+    verify_artifact_inventory(manifest, artifact_bytes.decode("utf-8"))
     verify_artifact_sha256(manifest, artifact_bytes)

@@ -13,7 +13,14 @@ every place you need to fill in your own logic.
    `CREATE OR REPLACE LUA SCRIPT` name and Lua body.
 3. Edit `module.toml`: set `name` to your directory name, `script_name` /
    `function` / `description` to match your script, and regenerate `sha256`
-   (`sha256sum <your-module-name>_v1.sql`).
+   (`sha256sum <your-module-name>_v1.sql`). If your module is the front door
+   to a whole subsystem, its artifact MAY carry more than the one entry
+   script — a Python UDF, a table, further Lua scripts — in the same `.sql`
+   file, separated by the `--/` … `/` block-marker convention documented in
+   this template's `module.toml` (see its `[[objects]]` comment block). Once
+   the artifact carries more than one statement, `module.toml` MUST declare
+   `[[objects]]` naming every object it creates, each carrying this module's
+   `_V<N>` suffix.
 4. Replace this `README.md` with what your module does and how to use it.
 5. Replace `tests/` with your module's own tests.
 6. Open a PR — CI regenerates `registry/index.json` from your `module.toml`

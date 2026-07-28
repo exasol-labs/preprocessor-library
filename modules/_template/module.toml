@@ -29,3 +29,47 @@ deploy_mode = "library-deployed"              # "library-deployed" or "self-depl
 [suggested_scope]
 type = "ROLE"                                 # "ROLE" or "USER"
 value = "PREPROC_ADMIN"                       # a default scope suggestion; the operator may deploy with a different scope
+
+# =============================================================================
+# [[objects]] — the object inventory (composite artifacts)
+# =============================================================================
+# This template's artifact (_template_v1.sql) is a single CREATE OR REPLACE
+# LUA SCRIPT statement, so [[objects]] is OPTIONAL here: the inventory is
+# derived as the single entry named by script_name above, exactly what every
+# existing single-statement module (cast_shorthand, trailing_comma) already
+# satisfies unedited.
+#
+# [[objects]] becomes REQUIRED once your artifact carries MORE THAN ONE
+# statement — e.g. a Lua entry script plus a Python UDF or a table your
+# subsystem needs. Declare one [[objects]] table per object the artifact
+# creates, each with:
+#   type  - the DDL kind, e.g. "LUA SCRIPT", "PYTHON3 SCALAR SCRIPT", "TABLE"
+#   name  - the fully-qualified deployed name, e.g. "PREPROC_RT.MY_MODULE_V1"
+# EVERY declared name MUST carry this module's _V<N> suffix (the entry script
+# AND every companion, not only the entry script) so a v1 and a v2 generation
+# coexist without collisions. Tooling independently parses the artifact and
+# rejects the module if the declared and parsed inventories disagree in
+# EITHER direction — the same accept/reject discipline already applied to
+# sha256.
+#
+# Separate multiple statements in the .sql artifact using the EXAplus
+# block-marker convention: wrap a statement whose body contains semicolons
+# (a Lua/Python script body) between a line that is solely "--/" and a line
+# that is solely "/"; terminate any other statement with ";". See
+# _template_v1.sql for a worked single-statement example and
+# docs/module-authoring.md ("The canonical artifact") in the
+# preprocessor-framework repo for the full grammar and a worked
+# composite (Lua entry + Python UDF) example.
+#
+# Example for a two-object composite module (NOT active here - this
+# template stays single-statement; copy this shape into your own
+# module.toml once your artifact grows a companion object):
+#
+# [[objects]]
+# type = "LUA SCRIPT"
+# name = "PREPROC_RT.MY_MODULE_V1"
+#
+# [[objects]]
+# type = "PYTHON3 SCALAR SCRIPT"
+# name = "PREPROC_RT.MY_MODULE_HELPER_V1"
+# =============================================================================
