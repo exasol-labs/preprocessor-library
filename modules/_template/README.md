@@ -1,15 +1,19 @@
 # \_template
 
 A copy-this-directory starting point for a new module. It is a complete,
-working (but trivial) TRANSLATE-phase module — `template_module(sqltext)`
+working (but trivial) TRANSLATE-phase module — `my_module(sqltext)`
 returns its input unchanged — so the registry generator and CI can index and
 test it exactly like a real module, while its body and comments describe
-every place you need to fill in your own logic.
+every place you need to fill in your own logic. Its `name` (`my_module`) and
+`_V1` artifact (`my_module_v1.sql`) are placeholder values, deliberately
+different from this directory's own name (`_template`, kept `_`-prefixed so
+the registry generator skips indexing it) — rename both to match your own
+module's directory when you copy this template.
 
 ## Using this template
 
 1. Copy the whole `modules/_template/` directory to `modules/<your-module-name>/`.
-2. Rename `_template_v1.sql` to `<your-module-name>_v1.sql` and edit its
+2. Rename `my_module_v1.sql` to `<your-module-name>_v1.sql` and edit its
    `CREATE OR REPLACE LUA SCRIPT` name and Lua body.
 3. Edit `module.toml`: set `name` to your directory name, `script_name` /
    `function` / `description` to match your script, and regenerate `sha256`

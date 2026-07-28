@@ -9,9 +9,12 @@ entry pointing at it.
 
 Use this when your module's whole artifact can live in this repo.
 
-1. Copy `modules/_template/` to `modules/<your-module-name>/` (kebab-case,
-   matching the directory name you choose).
-2. Rename `_template_v1.sql` to `<your-module-name>_v1.sql` and replace its
+1. Copy `modules/_template/` to `modules/<your-module-name>/` (`snake_case`,
+   an identifier — a letter followed by letters, digits, or underscores, no
+   hyphens — matching the directory name you choose: `module.toml`'s `name`
+   must equal it and must itself be a plain identifier so it works unquoted
+   in `PREPROC INSTALL MODULE <name>`).
+2. Rename `my_module_v1.sql` to `<your-module-name>_v1.sql` and replace its
    body with your module's `CREATE OR REPLACE LUA SCRIPT PREPROC_RT.<NAME>_V1
    AS <lua body>`. A ten-line transform stays a single statement — still the
    common case, and it needs no `[[objects]]` array (see step 3). A module

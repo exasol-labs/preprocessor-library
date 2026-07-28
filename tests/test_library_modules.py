@@ -15,6 +15,8 @@ canonical artifact") for the contract these tests hold the library to.
 
 from pathlib import Path
 
+from _stamping import stamping_args
+
 from preproc.module.artifact import normalize_object_name
 from preproc.module.manifest import (
     ENTRY_OBJECT_TYPE,
@@ -26,16 +28,6 @@ from preproc.module.registry import generate_index, index_drift, render_index
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _ERGONOMICS_MODULES = ("cast_shorthand", "trailing_comma")
-
-
-def _stamping_args() -> dict[str, str]:
-    """The (ref, library_version) scripts/generate_index.py stamps the committed index with.
-
-    Mirrors that script's own ``_version``/``_ref`` exactly, so a byte-identical
-    regeneration check here can never diverge from what CI's drift-check runs.
-    """
-    version = (_REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip().lstrip("v")
-    return {"ref": f"v{version}", "library_version": version}
 
 
 def test_ergonomics_modules_valid_without_objects_array():
@@ -91,7 +83,7 @@ def test_index_schema_version_2_lists_all_modules():
     stamping scripts/generate_index.py uses) reproduces the committed file
     byte-for-byte, run twice in a row, proving regeneration is deterministic.
     """
-    stamping = _stamping_args()
+    stamping = stamping_args(_REPO_ROOT)
     ref = stamping["ref"]
     library_version = stamping["library_version"]
 

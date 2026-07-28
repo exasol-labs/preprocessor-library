@@ -18,7 +18,7 @@ from preproc.module.manifest import (
 )
 
 _MODULE_DIR = Path(__file__).resolve().parents[1]
-_ARTIFACT = _MODULE_DIR / "_template_v1.sql"
+_ARTIFACT = _MODULE_DIR / "my_module_v1.sql"
 _MANIFEST = _MODULE_DIR / "module.toml"
 
 
@@ -32,7 +32,7 @@ def test_template_manifest_and_artifact_conform():
 
 @pytest.mark.integration
 def test_template_passthrough(installed):
-    """Deployed, template_module(sqltext) returns its input unchanged."""
+    """Deployed, my_module(sqltext) returns its input unchanged."""
     conn = installed
     manifest = load_manifest(_MANIFEST)
     statement = _ARTIFACT.read_text(encoding="utf-8")

@@ -11,6 +11,8 @@ preprocessor-framework).
 
 from pathlib import Path
 
+from _stamping import stamping_args
+
 from preproc.module.manifest import (
     load_manifest,
     verify_artifact_inventory,
@@ -108,10 +110,14 @@ def test_index_lists_cast_shorthand_and_trailing_comma():
 
 def test_index_regeneration_is_byte_identical_to_committed():
     """Regenerating registry/index.json from modules/ reproduces the committed file exactly."""
-    drift = index_drift(_REPO_ROOT)
+    stamping = stamping_args(_REPO_ROOT)
+    ref = stamping["ref"]
+    library_version = stamping["library_version"]
+
+    drift = index_drift(_REPO_ROOT, ref=ref, library_version=library_version)
     assert drift == [], f"registry/index.json is out of sync: {drift}"
 
-    fresh_text = render_index(generate_index(_REPO_ROOT))
+    fresh_text = render_index(generate_index(_REPO_ROOT, ref=ref, library_version=library_version))
     committed_text = (_REPO_ROOT / "registry" / "index.json").read_text(encoding="utf-8")
     assert fresh_text == committed_text
 

@@ -10,20 +10,29 @@
 # valid, harmless module (a TRANSLATE no-op) rather than a stub — the
 # registry generator auto-indexes every modules/*/module.toml it finds, so a
 # deliberately-invalid template would break `preproc module list` / CI's
-# index regeneration for every module, not just this one. `name` here MUST
-# keep matching this directory's name (`_template`) for the same reason:
-# the generator resolves the artifact file from `name`, not from the
-# directory it was found in.
+# index regeneration for every module, not just this one. `name` here
+# deliberately does NOT match this directory's name: the directory stays
+# `_template` (leading underscore) so the registry generator's
+# `_`-prefix skip rule keeps it out of the operator-facing index, while
+# `name` must be a real identifier (no leading underscore, no hyphens — see
+# its own comment below) so the artifact file the generator resolves from
+# `name` (`my_module_v1.sql`, NOT `_template_v1.sql`) exists and validates.
+# An author copying this directory renames BOTH the new directory and
+# `name` to match each other, same as every other module here.
 # =============================================================================
 
-name = "_template"                            # kebab-case; MUST match the modules/<name>/ directory
+name = "my_module"                            # snake_case identifier (letter, then letters/digits/underscores; NO hyphens):
+                                               # this is a placeholder value an author MUST replace. It intentionally does
+                                               # NOT match this directory's name (`_template`) — see the note above about
+                                               # why the directory stays `_`-prefixed. When you copy this template, rename
+                                               # BOTH the directory and this `name` to match each other.
 description = "Placeholder TRANSLATE-phase template module. Copy this directory to start a new one."
 phase = "TRANSLATE"                           # one of: TRANSLATE, EXPAND, REWRITE
-script_name = "PREPROC_RT.TEMPLATE_MODULE_V1" # fully qualified; MUST end in _V<N>
-function = "template_module"                  # the exported Lua function name
+script_name = "PREPROC_RT.MY_MODULE_V1"       # fully qualified; MUST end in _V<N>
+function = "my_module"                        # the exported Lua function name
 version = 1                                   # MUST equal the _V<N> suffix above
 min_framework = "0.3.0"                       # lowest framework release this module supports
-sha256 = "c9d06b070443c936672190b9c0deb09638160f2481095e198f9590a8d33ff9c5"  # hex digest of _template_v1.sql's bytes
+sha256 = "523238f58f7ed9dc44dedf216b4564f4cb1e7d1bc86b59bbae4d8b83c60392dc"  # hex digest of my_module_v1.sql's bytes
 deploy_mode = "library-deployed"              # "library-deployed" or "self-deployed" (self-deployed needs [source] instead of sha256)
 
 [suggested_scope]
@@ -33,7 +42,7 @@ value = "PREPROC_ADMIN"                       # a default scope suggestion; the 
 # =============================================================================
 # [[objects]] — the object inventory (composite artifacts)
 # =============================================================================
-# This template's artifact (_template_v1.sql) is a single CREATE OR REPLACE
+# This template's artifact (my_module_v1.sql) is a single CREATE OR REPLACE
 # LUA SCRIPT statement, so [[objects]] is OPTIONAL here: the inventory is
 # derived as the single entry named by script_name above, exactly what every
 # existing single-statement module (cast_shorthand, trailing_comma) already
@@ -56,7 +65,7 @@ value = "PREPROC_ADMIN"                       # a default scope suggestion; the 
 # block-marker convention: wrap a statement whose body contains semicolons
 # (a Lua/Python script body) between a line that is solely "--/" and a line
 # that is solely "/"; terminate any other statement with ";". See
-# _template_v1.sql for a worked single-statement example and
+# my_module_v1.sql for a worked single-statement example and
 # docs/module-authoring.md ("The canonical artifact") in the
 # preprocessor-framework repo for the full grammar and a worked
 # composite (Lua entry + Python UDF) example.
