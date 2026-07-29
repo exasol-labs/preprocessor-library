@@ -37,8 +37,44 @@ jobs:
         with:
           python-version: "3.12"
 
+      # A v* tag is the only place the tag name and the committed VERSION can
+      # disagree, and every downstream artifact trusts a DIFFERENT one of them:
+      # the tarball name comes from the tag (next step), while the
+      # registry/index.json inside that tarball was stamped from ./VERSION by
+      # scripts/generate_index.py. Tagging v0.4.0 at a commit whose VERSION says
+      # 0.3.0 would publish preproc-lib-0.4.0.tar.gz containing an index reading
+      # library_version 0.3.0 and pinning every module at source.ref=v0.3.0,
+      # attach it to Release v0.4.0, and move `latest` onto it — every artifact
+      # disagreeing, silently, and already shipped. So fail here, before
+      # anything is built, published, or re-tagged.
+      #
+      # This also closes the "index pins a ref that never comes to exist" gap:
+      # once the tag is required to equal v<VERSION>, the ref the index
+      # advertises is necessarily the tag being created.
+      #
+      # It cannot live in tests/. On a release-prep PR that bumps VERSION, the
+      # matching tag legitimately does not exist yet, so any "the pinned ref
+      # resolves" assertion would fail on every such PR — and actions/checkout
+      # fetches no tags by default, so a test could not see them reliably
+      # anyway. Gated to the tag event, the invariant is both checkable and true.
+      - name: Check the tag matches the committed VERSION (v* tags only)
+        if: github.ref_type == 'tag'
+        run: |
+          raw="$(tr -d '[:space:]' < VERSION)"
+          committed="v${raw#v}"
+          if [ "$GITHUB_REF_NAME" != "$committed" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match the committed VERSION ($committed)."
+            echo "registry/index.json pins every module at source.ref=$committed, so publishing"
+            echo "under $GITHUB_REF_NAME would ship a tarball, a Release and an index that disagree."
+            echo "Fix by either re-tagging as $committed, or bumping VERSION to ${GITHUB_REF_NAME#v},"
+            echo "running scripts/generate_index.py, committing, and re-tagging."
+            exit 1
+          fi
+          echo "Tag $GITHUB_REF_NAME matches the committed VERSION."
+
       # On a tag, derive the version from the tag (strip a leading 'v') so the
       # tarball name matches the release; otherwise use the committed VERSION.
+      # Safe because the step above proved the two agree on a tag event.
       - name: Build the release tarball
         run: |
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
