@@ -50,8 +50,16 @@ def test_template_module_skeleton_present():
     )
 
 
-def _assert_conformant_module(name: str, *, script_name: str) -> None:
-    """A modules/<name>/ directory has the standard layout and a valid manifest."""
+def _assert_conformant_module(name: str, *, script_name: str, phase: str) -> None:
+    """A modules/<name>/ directory has the standard layout and a valid manifest.
+
+    ``phase`` is the phase THAT module declares, not a fixed one: the library
+    hosts modules in every phase the contract admits (``TRANSLATE``, ``EXPAND``,
+    ``REWRITE``), and the layout a module must have is identical in all of them.
+    It stays a required argument rather than being read off the manifest so each
+    caller still pins its own module's phase — a module silently changing phase
+    is a behaviour change, not a layout one.
+    """
     module_dir = _REPO_ROOT / "modules" / name
     assert module_dir.is_dir(), f"modules/{name}/ is missing"
 
@@ -62,7 +70,7 @@ def _assert_conformant_module(name: str, *, script_name: str) -> None:
 
     manifest = load_manifest(manifest_path)
     assert manifest.script_name == script_name
-    assert manifest.phase == "TRANSLATE"
+    assert manifest.phase == phase
     assert manifest.deploy_mode == "library-deployed"
 
     artifact_path = module_dir / f"{manifest.name}_v{manifest.version}.sql"
@@ -77,13 +85,29 @@ def _assert_conformant_module(name: str, *, script_name: str) -> None:
 
 def test_cast_shorthand_module_present_and_conformant():
     """cast_shorthand is a complete module with the expected script identity."""
-    _assert_conformant_module("cast_shorthand", script_name="PREPROC_RT.CAST_SHORTHAND_V1")
+    _assert_conformant_module(
+        "cast_shorthand", script_name="PREPROC_RT.CAST_SHORTHAND_V1", phase="TRANSLATE"
+    )
 
 
 def test_trailing_comma_module_present_and_conformant():
     """trailing_comma is a complete module with the expected script identity."""
     _assert_conformant_module(
-        "trailing_comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V2"
+        "trailing_comma", script_name="PREPROC_RT.ERGONOMICS_TRAILING_COMMA_V2", phase="TRANSLATE"
+    )
+
+
+def test_confd_control_module_present_and_conformant():
+    """confd_control is a complete module, and the layout check accepts its EXPAND phase.
+
+    The first non-TRANSLATE module in the library, and the first composite one.
+    Neither changes what the layout check requires: module.toml, README.md,
+    tests/ and the standard-layout artifact must all be present, and the
+    artifact's inventory and sha256 must still agree with the manifest — for all
+    fifteen of its objects rather than one.
+    """
+    _assert_conformant_module(
+        "confd_control", script_name="PREPROC_RT.CONFD_CONTROL_V1", phase="EXPAND"
     )
 
 

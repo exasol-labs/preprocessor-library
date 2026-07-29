@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "library_version": "0.2.1",
+  "library_version": "0.3.0",
   "modules": [
     {
       "name": "cast_shorthand",
@@ -25,7 +25,89 @@
       ],
       "source": {
         "repo": "exasol-labs/preprocessor-library",
-        "ref": "v0.2.1"
+        "ref": "v0.3.0"
+      }
+    },
+    {
+      "name": "confd_control",
+      "version": 1,
+      "phase": "EXPAND",
+      "script_name": "PREPROC_RT.CONFD_CONTROL_V1",
+      "function": "confd_control",
+      "description": "ConfD-backed database, BucketFS and storage administration from SQL: rewrites CONTROL DATABASE / CONTROL BUCKETFS / CONTROL STORAGE commands into the ConfD gateway calls that serve them.",
+      "min_framework": "0.7.0",
+      "suggested_scope": {
+        "type": "ROLE",
+        "value": "DBA"
+      },
+      "deploy_mode": "library-deployed",
+      "sha256": "7d20068a0763526981bc90ec554e7f1b8f8c2065f9dcc3c78a28d838d56ce5cf",
+      "artifact_path": "modules/confd_control/confd_control_v1.sql",
+      "objects": [
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.CONFD_JOB_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.CONFD_QUERY_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.VIRTUAL_RESTORE_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.BUCKETFS_FILE_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.LICENSE_INSTALL_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.REMOTE_VOLUME_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.SESSION_LOG_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.LOG_EVENTS_V1"
+        },
+        {
+          "type": "PYTHON3 SCALAR SCRIPT",
+          "name": "PREPROC_RT.REMOTE_VOLUME_QUERY_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC_RT.CONFD_CONTROL_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC.ADMIN_CONFD_JOB_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC.ADMIN_VIRTUAL_RESTORE_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC.ADMIN_BUCKETFS_FILE_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC.ADMIN_LICENSE_V1"
+        },
+        {
+          "type": "LUA SCRIPT",
+          "name": "PREPROC.ADMIN_REMOTE_VOLUME_V1"
+        }
+      ],
+      "source": {
+        "repo": "exasol-labs/preprocessor-library",
+        "ref": "v0.3.0"
       }
     },
     {
@@ -51,7 +133,7 @@
       ],
       "source": {
         "repo": "exasol-labs/preprocessor-library",
-        "ref": "v0.2.1"
+        "ref": "v0.3.0"
       }
     }
   ]
