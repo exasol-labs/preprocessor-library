@@ -263,3 +263,43 @@ def test_ci_workflow_checks_index_and_inventory_sync():
         "CI must actually run the inventory-sync gate — a run step invoking "
         "pytest over tests/ — not just document the intent in a comment"
     )
+
+
+def test_release_workflow_gates_the_tag_against_the_committed_version():
+    """A v* tag must be checked against ./VERSION before anything is published.
+
+    The release workflow derives the tarball name from the TAG, while the
+    registry/index.json inside that tarball is stamped from ./VERSION (see
+    tests/_stamping.py). Nothing else reconciles the two, so a tag that
+    disagrees with VERSION publishes a tarball, a GitHub Release and an index
+    that all name different versions — and moves the mutable `latest` tag onto
+    that state. This asserts the reconciling guard exists and runs on the tag
+    event, before the build and publish steps.
+
+    The guard belongs in the workflow rather than here: on a release-prep PR the
+    matching tag does not exist yet, so a "the pinned ref resolves" assertion
+    would fail on every such PR, and actions/checkout fetches no tags by default.
+    """
+    release_workflow = _REPO_ROOT / ".github" / "workflows" / "release.yml"
+    assert release_workflow.exists(), "release.yml not found"
+    text = release_workflow.read_text(encoding="utf-8")
+
+    # Comment-stripped, for the same reason as the gate above: this file explains
+    # the invariant at length in prose, and prose must not satisfy the assertion.
+    executable = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+
+    assert "VERSION" in executable, "the release workflow must read the committed VERSION"
+    assert "GITHUB_REF_NAME" in executable, "the guard must compare against the tag name"
+    assert re.search(r"exit\s+1", executable), (
+        "the tag/VERSION guard must fail the build, not merely warn"
+    )
+
+    # The guard must run before the tarball is built, or a mismatched artifact is
+    # produced (and possibly uploaded) before anyone notices.
+    guard = executable.find("GITHUB_REF_NAME")
+    build = executable.find("build_release.py")
+    assert build != -1, "release.yml must build the tarball via scripts/build_release.py"
+    assert guard < build, (
+        "the tag/VERSION guard must precede the tarball build so a mismatch "
+        "fails before any artifact is produced"
+    )
