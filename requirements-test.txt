@@ -1,0 +1,24 @@
+# Test dependencies for this repo's own suites: tests/ and every
+# modules/<name>/tests/. Install with:
+#
+#     pip install -r requirements-test.txt
+#
+# plus the framework package (see below), then run `pytest`.
+#
+# lupa is NOT optional garnish. Several modules verify their shipped entry
+# script by loading its Lua body into an in-process Lua runtime and calling the
+# rewrite function directly — the only behavioural check of the published bytes
+# that needs neither a database nor the module's backend. Those tests are
+# guarded by `pytest.mark.skipif(not _HAVE_LUPA)`, so without lupa installed
+# they SILENTLY SKIP and the check is dark rather than failing. Keep it here.
+lupa
+pytest
+
+# preprocessor-framework is deliberately absent from this file. It is a PRIVATE
+# repo with no PyPI release, so it can only be installed from an authenticated
+# source: CI builds a git URL from the FRAMEWORK_TOKEN secret
+# (.github/workflows/ci.yml), and a contributor installs it from a local
+# checkout (`pip install -e ../preprocessor-framework`) or exports PYTHONPATH to
+# its src/. An unauthenticated git URL pinned here would make
+# `pip install -r requirements-test.txt` fail for everyone. It brings pyexasol
+# with it, which is why no database driver is listed either.
