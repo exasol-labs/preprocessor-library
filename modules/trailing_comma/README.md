@@ -44,19 +44,37 @@ comma inside any of them is never removed. The module adds no defensive
 
 ## Install
 
+Needs framework **0.3.0+**. From a SQL client, as a `PREPROC_ADMIN` holder:
+
+```sql
+PREPROC INSTALL MODULE trailing_comma FOR ROLE ANALYSTS;
+```
+
+That is the whole install — no CLI, no Python toolchain. With no `FROM` clause
+the source defaults to this library's newest release over HTTPS, which resolves
+**v2**. On a cluster with no outbound internet, stage a release tarball in
+BucketFS and install off that instead:
+
+```sql
+PREPROC INSTALL MODULE trailing_comma
+  FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.3.0.tar.gz' FOR ROLE ANALYSTS;
+```
+
+Or use the CLI from your own machine (needs `uv` + a DB connection), which adds
+`update` / `remove` / `sync` and an offline `bundle`:
+
 ```
 uv run preproc module add trailing_comma --registry /path/to/preprocessor-library
-```
-
-or, for an air-gapped database, bundle it for hand-carry:
-
-```
 uv run preproc module bundle trailing_comma --output trailing_comma.sql --registry /path/to/preprocessor-library
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may
-deploy with a different scope. Installing needs the `preproc module` CLI
-(`uv` + a DB connection) — see `docs/operations.md` § Module management in
-the `preprocessor-framework` repo for the CLI reference (including the
-`--registry` flag and the air-gap `bundle` flow), and
+deploy with a different scope, and a user must **hold** that role for the
+transform to reach them. Note the deployed script is named
+`ERGONOMICS_TRAILING_COMMA_V2`, not `TRAILING_COMMA_V2` — the name is inherited
+from this module's origin in the framework's `examples/` directory and is
+deliberately unchanged. See the library
+[README § Installing a module](../../README.md#installing-a-module) for both
+paths in full (including BucketFS staging), `docs/operations.md` § Module
+management in the `preprocessor-framework` repo for the CLI reference, and
 `docs/module-authoring.md` there for the module contract.

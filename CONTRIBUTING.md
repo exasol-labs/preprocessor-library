@@ -43,6 +43,19 @@ Use this when your module's whole artifact can live in this repo.
    package), plus integration tests against a real Exasol instance for your
    module's actual behaviour, using the `installed` fixture from this repo's
    root `conftest.py`.
+
+   Test dependencies are declared in `requirements-test.txt` at the repo root.
+   Add anything new there rather than to a CI step, or it lands in one job and
+   is missing from the other. This matters more than it looks: a
+   `skipif`-guarded test SKIPS SILENTLY when its package is absent, so a check
+   guarded that way is only ever as reliable as the declaration.
+
+   To run the suite locally you also need the framework package, which is
+   private and unpublished: `pip install -e ../preprocessor-framework` from a
+   local checkout, or export `PYTHONPATH=<checkout>/src`. The database-backed
+   tests skip cleanly when `EXASOL_DSN` / `EXASOL_USER` / `EXASOL_PASSWORD` are
+   unset, so plain `pytest` with no database configured runs every static gate
+   and skips only the rest.
 6. Regenerate the index and commit it alongside your module:
 
    ```
@@ -136,11 +149,17 @@ curated pointer, and a human reviewing your PR is the trust gate.
 
 ## What CI checks on every PR
 
-* Every module's `tests/` run against a docker Exasol with the framework
-  installed.
+Every check that does not need a database runs in the `drift-check` job, which
+runs the whole of `tests/`. Only the module suites, which do need one, wait for
+the docker-Exasol job:
+
 * `registry/index.json` is regenerated from `modules/*/module.toml` and
   `registry/external/*.toml` and compared to the committed file — a mismatch
   fails the build.
 * Every module's declared `[[objects]]` inventory is compared against its
   artifact's independently parsed inventory — a disagreement in either
   direction fails the build, same as a `sha256` mismatch.
+* Every module's `sha256`, directory layout and manifest conformance are
+  checked.
+* Every module's `tests/` run against a docker Exasol with the framework
+  installed.

@@ -20,8 +20,15 @@ phase `TRANSLATE`.
   them is never rewritten.
 * The left operand of `::` may be an unqualified or schema-qualified
   identifier (`a`, `schema.table.col`), a parenthesised expression `(...)`, a
-  function call `f(...)` (optionally schema-qualified), a string or numeric
-  literal, or a previously-rewritten `CAST(...)` result (for chaining).
+  function call `f(...)` (optionally schema-qualified), a numeric literal, or a
+  previously-rewritten `CAST(...)` result (for chaining).
+* **Known limitation — a string-literal operand is not rewritten.** The scanner
+  passes a single-quoted string through as a completed chunk before it reaches
+  the following `::`, so `'42'::DECIMAL` is returned **unchanged** and reaches
+  the engine as a normal syntax error. This fails closed (no half-rewritten
+  SQL), but it does mean `'…'::type` is not supported in v1 — write
+  `CAST('42' AS DECIMAL)` for a string literal, and use a column or numeric
+  operand (`AMOUNT_TXT::DECIMAL(10,2)`) when demonstrating the module.
 * Chained casts are rewritten inside-out in a single left-to-right pass:
   `a::int::text` → `CAST(CAST(a AS int) AS text)`.
 * The type name is the token immediately following `::`, plus an optional
@@ -40,23 +47,40 @@ phase `TRANSLATE`.
 | `SELECT s.t.col::varchar(20) FROM s.t` | `SELECT CAST(s.t.col AS varchar(20)) FROM s.t` |
 | `SELECT (a + b)::decimal(10,2) FROM t` | `SELECT CAST((a + b) AS decimal(10,2)) FROM t` |
 | `SELECT a::int::text FROM t` | `SELECT CAST(CAST(a AS int) AS text) FROM t` |
+| `SELECT 123::varchar(10) FROM dual` | `SELECT CAST(123 AS varchar(10)) FROM dual` |
 | `SELECT '::not_a_cast' AS x FROM dual` | unchanged (inside a string literal) |
+| `SELECT '42'::DECIMAL FROM dual` | unchanged — string-literal operand, see limitation above |
 
 ## Install
 
+Needs framework **0.3.0+**. From a SQL client, as a `PREPROC_ADMIN` holder:
+
+```sql
+PREPROC INSTALL MODULE cast_shorthand FOR ROLE ANALYSTS;
+```
+
+That is the whole install — no CLI, no Python toolchain. With no `FROM` clause
+the source defaults to this library's newest release over HTTPS. On a cluster
+with no outbound internet, stage a release tarball in BucketFS and install off
+that instead:
+
+```sql
+PREPROC INSTALL MODULE cast_shorthand
+  FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.3.0.tar.gz' FOR ROLE ANALYSTS;
+```
+
+Or use the CLI from your own machine (needs `uv` + a DB connection), which adds
+`update` / `remove` / `sync` and an offline `bundle`:
+
 ```
 uv run preproc module add cast_shorthand --registry /path/to/preprocessor-library
-```
-
-or, for an air-gapped database, bundle it for hand-carry:
-
-```
 uv run preproc module bundle cast_shorthand --output cast_shorthand.sql --registry /path/to/preprocessor-library
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may
-deploy with a different scope. Installing needs the `preproc module` CLI
-(`uv` + a DB connection) — see `docs/operations.md` § Module management in
-the `preprocessor-framework` repo for the CLI reference (including the
-`--registry` flag and the air-gap `bundle` flow), and
+deploy with a different scope, and a user must **hold** that role for the
+transform to reach them. See the library
+[README § Installing a module](../../README.md#installing-a-module) for both
+paths in full (including BucketFS staging), `docs/operations.md` § Module
+management in the `preprocessor-framework` repo for the CLI reference, and
 `docs/module-authoring.md` there for the module contract.

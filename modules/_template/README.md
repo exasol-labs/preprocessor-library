@@ -30,6 +30,27 @@ module's directory when you copy this template.
 6. Open a PR — CI regenerates `registry/index.json` from your `module.toml`
    and runs your `tests/` against a docker Exasol.
 
+## Testing it before you open a PR
+
+You do not need a merged PR (or any network) to install and try your module — a
+local checkout works as a registry source:
+
+```
+uv run preproc module validate <your-module-name> --registry .
+uv run preproc module add <your-module-name> --registry .
+```
+
+`validate` runs the static conformance checks (manifest, `sha256`, and the
+declared-vs-parsed `[[objects]]` inventory) and, when a database is configured,
+also compiles your artifact's statements and smoke-tests the entry function in a
+disposable schema. Run it before every commit — it catches the same things CI
+will. Regenerate the index with `python scripts/generate_index.py` and commit it
+alongside your module.
+
+The SQL-side `PREPROC INSTALL MODULE` path resolves modules from a *published*
+index, so it only sees your module once your PR is merged and released; use the
+CLI with `--registry .` while developing.
+
 See `docs/module-authoring.md` in the `preprocessor-framework` repo for the
 full contract (the function signature per phase, the `_V<N>` versioning
 discipline, and the `module.toml` field reference), and `CONTRIBUTING.md` at
