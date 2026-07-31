@@ -79,7 +79,16 @@ jobs:
           FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
         run: |
           if [ -z "$FRAMEWORK_TOKEN" ]; then
-            echo "::notice::FRAMEWORK_TOKEN not set — skipping the framework-dependent static checks."
+            echo "::warning title=Gates did not run::FRAMEWORK_TOKEN is not set, so the index drift check and the no-database gates were SKIPPED. This job is green because nothing ran, not because anything passed."
+            {
+              echo "## :warning: Static gates did not run"
+              echo
+              echo "\`FRAMEWORK_TOKEN\` is not configured, so this job installed nothing and"
+              echo "checked nothing. A green tick here means **no gate ran** — index drift,"
+              echo "sha256, object inventory and layout conformance are all unverified."
+              echo
+              echo "Removing this gating is tracked in RELEASING.md § When the framework repo goes public."
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "SKIP=1" >> "$GITHUB_ENV"
             exit 0
           fi
@@ -129,7 +138,15 @@ jobs:
           FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
         run: |
           if [ -z "$FRAMEWORK_TOKEN" ]; then
-            echo "::notice::FRAMEWORK_TOKEN not set — skipping the framework-dependent module tests."
+            echo "::warning title=Module tests did not run::FRAMEWORK_TOKEN is not set, so no module test ran against a database. This job is green because nothing ran, not because anything passed."
+            {
+              echo "## :warning: Module tests did not run"
+              echo
+              echo "\`FRAMEWORK_TOKEN\` is not configured, so no docker Exasol was started and"
+              echo "no module's \`tests/\` executed."
+              echo
+              echo "Removing this gating is tracked in RELEASING.md § When the framework repo goes public."
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "SKIP=1" >> "$GITHUB_ENV"
             exit 0
           fi

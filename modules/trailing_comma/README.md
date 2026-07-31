@@ -57,15 +57,7 @@ BucketFS and install off that instead:
 
 ```sql
 PREPROC INSTALL MODULE trailing_comma
-  FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.3.0.tar.gz' FOR ROLE ANALYSTS;
-```
-
-Or use the CLI from your own machine (needs `uv` + a DB connection), which adds
-`update` / `remove` / `sync` and an offline `bundle`:
-
-```
-uv run preproc module add trailing_comma --registry /path/to/preprocessor-library
-uv run preproc module bundle trailing_comma --output trailing_comma.sql --registry /path/to/preprocessor-library
+  FROM 'bucketfs:bfsdefault/<bucket>/preproc-lib-0.3.1.tar.gz' FOR ROLE ANALYSTS;
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may

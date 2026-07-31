@@ -66,15 +66,7 @@ that instead:
 
 ```sql
 PREPROC INSTALL MODULE cast_shorthand
-  FROM 'bucketfs:PREPROC_BFS/preproc-lib-0.3.0.tar.gz' FOR ROLE ANALYSTS;
-```
-
-Or use the CLI from your own machine (needs `uv` + a DB connection), which adds
-`update` / `remove` / `sync` and an offline `bundle`:
-
-```
-uv run preproc module add cast_shorthand --registry /path/to/preprocessor-library
-uv run preproc module bundle cast_shorthand --output cast_shorthand.sql --registry /path/to/preprocessor-library
+  FROM 'bucketfs:bfsdefault/<bucket>/preproc-lib-0.3.1.tar.gz' FOR ROLE ANALYSTS;
 ```
 
 The suggested default scope is `FOR ROLE PREPROC_ADMIN`; the operator may

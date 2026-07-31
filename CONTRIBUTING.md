@@ -5,6 +5,50 @@ Pick whichever fits: a library-deployed module lives its whole life here;
 an externally-hosted module keeps living in its own repo and gets one curated
 entry pointing at it.
 
+## Contributor tooling
+
+Everything below needs the `preprocessor-framework` package: `preproc module
+validate` is its CLI, and `scripts/generate_index.py` imports
+`preproc.module.registry` (deliberately — it is the same generator CI runs, not
+a reimplementation that could drift from it). Install it once:
+
+```bash
+pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@main"
+# or, from a local checkout you also work on:
+pip install -e ../preprocessor-framework
+# or, without installing at all:
+export PYTHONPATH=<checkout>/src
+
+pip install -r requirements-test.txt        # the test suite's own dependencies
+```
+
+Then, from the root of THIS repo:
+
+```bash
+python scripts/generate_index.py            # regenerate registry/index.json
+preproc module validate <name> --registry . # the static gates CI runs
+pytest                                      # the whole suite
+```
+
+Two things worth knowing before you run them:
+
+* **Regenerate the index before you validate.** `validate` resolves a module
+  *through* `registry/index.json`, so a freshly copied module directory fails
+  with `module 'my_module' not found in registry` until the generator has run.
+* **`uv run preproc …` does not work from this repo.** This repo has no
+  `pyproject.toml`, so `uv run` builds an environment that does not contain the
+  framework and reports `Failed to spawn: preproc`. Call `preproc` directly, in
+  the environment you installed it into.
+
+Without a database, `pytest` runs every static gate and skips the rest cleanly;
+set `EXASOL_DSN` / `EXASOL_USER` / `EXASOL_PASSWORD` to run the integration
+tests too. For a throwaway instance, the same image CI uses:
+
+```bash
+docker run -d --name exasol --privileged -p 8563:8563 exasol/docker-db:latest-8
+export EXASOL_DSN=localhost:8563 EXASOL_USER=sys EXASOL_PASSWORD=exasol EXASOL_TLS_VERIFY=0
+```
+
 ## Path 1 — Add a library-deployed module (PR into `modules/`)
 
 Use this when your module's whole artifact can live in this repo.
@@ -50,12 +94,9 @@ Use this when your module's whole artifact can live in this repo.
    `skipif`-guarded test SKIPS SILENTLY when its package is absent, so a check
    guarded that way is only ever as reliable as the declaration.
 
-   To run the suite locally you also need the framework package, which is
-   private and unpublished: `pip install -e ../preprocessor-framework` from a
-   local checkout, or export `PYTHONPATH=<checkout>/src`. The database-backed
-   tests skip cleanly when `EXASOL_DSN` / `EXASOL_USER` / `EXASOL_PASSWORD` are
-   unset, so plain `pytest` with no database configured runs every static gate
-   and skips only the rest.
+   Rename the file you copied from the template (`tests/test_template.py`) to
+   something specific to your module. Running the suite needs the framework
+   package — see [Contributor tooling](#contributor-tooling) above.
 6. Regenerate the index and commit it alongside your module:
 
    ```
@@ -64,9 +105,22 @@ Use this when your module's whole artifact can live in this repo.
 
    This stamps the index with the library's `library_version` (from `./VERSION`)
    and pins each entry's `source.ref` to the matching release tag `v<VERSION>`.
-7. Open a PR. CI deploys your module against a docker Exasol, runs your
+   Do this **before** the next step: `validate` resolves your module through the
+   index.
+7. Check it locally — the same gates CI runs:
+
+   ```
+   preproc module validate <your-module-name> --registry .
+   pytest
+   ```
+
+8. Open a PR. CI deploys your module against a docker Exasol, runs your
    `tests/`, and runs `python scripts/generate_index.py --check`, failing if the
    committed `registry/index.json` is out of sync.
+
+Your module becomes installable through `PREPROC INSTALL MODULE` only once a
+release moves the `latest` tag — merging is not enough. See
+[RELEASING.md](RELEASING.md).
 
 Do **not** hand-edit `registry/index.json` for a library-deployed module; it is
 generated from every `modules/*/module.toml` by `scripts/generate_index.py`.
@@ -160,6 +214,8 @@ the docker-Exasol job:
   artifact's independently parsed inventory — a disagreement in either
   direction fails the build, same as a `sha256` mismatch.
 * Every module's `sha256`, directory layout and manifest conformance are
-  checked.
+  checked. "Layout" includes the things step 4 and step 5 ask for: every
+  `modules/<name>/` must carry a non-empty `README.md` and a `tests/` directory
+  holding at least one `test_*.py`.
 * Every module's `tests/` run against a docker Exasol with the framework
   installed.

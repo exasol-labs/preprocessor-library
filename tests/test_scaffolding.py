@@ -97,6 +97,44 @@ def test_trailing_comma_module_present_and_conformant():
     )
 
 
+def test_every_module_has_the_layout_contributing_requires():
+    """EVERY modules/<name>/ carries the README and tests/ CONTRIBUTING.md mandates.
+
+    The two tests above pin the script identity of two NAMED modules, which is
+    what makes them identity tests rather than layout tests. Neither says
+    anything about a module added later: before this gate, a new module could
+    merge with an empty README.md and no tests/ directory at all and every
+    check in the repo — `preproc module validate` included — stayed green,
+    while CONTRIBUTING.md step 4 and step 5 require both. A requirement no gate
+    enforces is a suggestion.
+
+    Every module in the tree is covered, `_template` included: the template is
+    the shape an author copies, so it must satisfy the same layout it teaches.
+    """
+    module_dirs = sorted(p.parent for p in (_REPO_ROOT / "modules").glob("*/module.toml"))
+    assert module_dirs, "no modules/*/module.toml found"
+
+    failures: list[str] = []
+    for module_dir in module_dirs:
+        name = module_dir.name
+
+        readme = module_dir / "README.md"
+        if not readme.is_file():
+            failures.append(f"modules/{name}/README.md is missing (CONTRIBUTING.md step 4)")
+        elif not readme.read_text(encoding="utf-8").strip():
+            failures.append(f"modules/{name}/README.md is empty (CONTRIBUTING.md step 4)")
+
+        tests_dir = module_dir / "tests"
+        if not tests_dir.is_dir():
+            failures.append(f"modules/{name}/tests/ is missing (CONTRIBUTING.md step 5)")
+        elif not list(tests_dir.glob("test_*.py")):
+            failures.append(
+                f"modules/{name}/tests/ contains no test_*.py (CONTRIBUTING.md step 5)"
+            )
+
+    assert not failures, "module layout does not match CONTRIBUTING.md:\n" + "\n".join(failures)
+
+
 def test_every_library_deployed_module_sha_matches_its_artifact():
     """Every modules/*/module.toml with deploy_mode=library-deployed has a correct sha256."""
     module_dirs = sorted(p.parent for p in (_REPO_ROOT / "modules").glob("*/module.toml"))
