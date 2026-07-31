@@ -11,13 +11,10 @@
 
 </div>
 
-<!-- DEMO: paste the GitHub user-attachments video URL on its own line here,
-     followed by the fallback link, matching exa-postgres-interface's README:
+https://github.com/user-attachments/assets/001fc2dd-3bc8-4d96-964c-0a33e7919077
 
-     https://github.com/user-attachments/assets/<id>
+> Don't see the video? [Watch the demo](https://github.com/exasol-labs/preprocessor-framework/blob/main/demo/Preprocessor_demo.mp4).
 
-     > Don't see the video? [Watch the demo](demo/demo.mp4).
--->
 
 Pick one from the catalog below and install it in a single statement — then, if
 you build something useful, [add it here](#contributing-a-module) so others can
