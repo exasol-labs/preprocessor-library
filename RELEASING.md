@@ -66,26 +66,18 @@ resolves itself at the next release, when the same generator restamps every
 entry at the new tag. It is also why the `latest` tag, not `main`, is the
 default install source: `latest` never points at that intermediate state.
 
-## When the framework repo goes public
+## Public framework transition
 
-`exasol-labs/preprocessor-framework` is private today, and several places in
-this repo work around that. When both repos are published, sweep all of them in
-one pass — each is a workaround that becomes misleading the moment it is untrue:
+`exasol-labs/preprocessor-framework` is public. The transition checklist is
+complete:
 
-- [ ] `.github/workflows/ci.yml` — delete the `FRAMEWORK_TOKEN` gating from both
-      jobs and install the framework from the plain public git URL, so the
-      static gates and module tests always run instead of skipping. **This is
-      the important one:** with the secret absent, both jobs currently skip and
-      the pipeline reports green with no gates run at all — on every fork PR.
-- [ ] `requirements-test.txt` — the comment block explaining why the framework
-      cannot be listed as a dependency. Once it is installable anonymously,
-      decide whether to list it and shorten the comment either way.
-- [ ] `CONTRIBUTING.md` § Contributor tooling — the git-URL install line can
-      drop any token/checkout caveat.
-- [ ] `README.md` — check the framework cross-links resolve, including the
+- [x] `.github/workflows/ci.yml` — both jobs install from the public git URL
+      through `requirements-test.txt` and always run their checks.
+- [x] `requirements-test.txt` — lists the public framework git URL directly.
+- [x] `CONTRIBUTING.md` § Contributor tooling — uses the same anonymous install.
+- [x] `README.md` — framework cross-links resolve, including the
       anchors: `#quick-start`, `#bring-your-own-preprocessor`,
       `#host-your-own-module-registry`, `docs/module-authoring.md`,
       `docs/operations.md#in-database-module-install`,
       `docs/operations.md#module-lifecycle`, `docs/air-gap-runbook.md`.
-- [ ] `AGENTS.md` — the note that the module contract lives in a repo an agent
-      may not be able to read.
+- [x] `AGENTS.md` — links to the public module contract.

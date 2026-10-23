@@ -17,7 +17,6 @@ and fails on any difference.
 ## Setup
 
 ```bash
-pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@main"
 pip install -r requirements-test.txt
 ```
 
@@ -26,10 +25,10 @@ package. `uv run preproc …` does **not** work here — this repo has no
 `pyproject.toml`, so `uv run` builds an environment without the framework and
 fails with `Failed to spawn: preproc`. Call `preproc` directly.
 
-> While `exasol-labs/preprocessor-framework` is private, that install needs
-> credentials and the framework's `docs/module-authoring.md` — the authoritative
-> module contract — may not be readable. The essentials are restated under
-> [Contract rules](#contract-rules) below; when the doc is reachable, it wins.
+The framework's
+[module authoring guide](https://github.com/exasol-labs/preprocessor-framework/blob/main/docs/module-authoring.md)
+is the authoritative module contract. The essentials are restated under
+[Contract rules](#contract-rules) below; the framework guide wins if they differ.
 
 ## Adding a library-deployed module
 

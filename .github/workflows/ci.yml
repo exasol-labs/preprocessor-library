@@ -11,9 +11,7 @@
 #                 under tests/ touches a database, so all of it belongs in the
 #                 job that always runs. Running only test_library_modules.py
 #                 here left the scaffolding gates reachable solely through the
-#                 heavy `test` job below — behind BOTH a FRAMEWORK_TOKEN secret
-#                 and a docker Exasol — so on any fork or unsecreted PR the
-#                 conformance gate was dark while the pipeline reported green.
+#                 heavy `test` job below, which needs a docker Exasol.
 #   test         — installs the framework package, boots a docker Exasol
 #                 (same image the framework's own CI uses), installs the
 #                 framework core into it, and runs every module's tests/
@@ -24,26 +22,15 @@
 # in-process Lua rewrite check SKIPS SILENTLY when lupa is absent, so leaving it
 # to an ad-hoc `pip install` line in one job is how that check goes dark.
 #
-# The framework is not published to PyPI yet, so it is installed straight from
-# its GitHub repo, pinned to `main`. That repo is PRIVATE, so both jobs install
-# it with an optional FRAMEWORK_TOKEN secret (a PAT or GitHub App token with
-# read access to it). When the secret is absent these framework-dependent checks
-# skip cleanly and the pipeline stays green; add the secret to turn them on. The
-# release-package build lives in release.yml and needs neither the framework nor
-# a token (it is stdlib-only).
+# The framework is not published to PyPI yet. Both jobs install it from its
+# public GitHub repository via requirements-test.txt. The release-package build
+# in release.yml remains stdlib-only.
 
 name: CI
 
 on:
   push:
   pull_request:
-
-env:
-  # Must resolve a framework build that has the version-stamped index generator
-  # (generate_index/index_drift accept library_version) and the optional-FROM +
-  # provenance-audit install path. That work is now on framework `main`; pin to
-  # the first framework release tag that carries it once one is cut.
-  FRAMEWORK_REF: main
 
 jobs:
 
@@ -68,38 +55,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The framework repo is private, so an anonymous clone cannot install it.
-      # Authenticate with an optional FRAMEWORK_TOKEN secret (a PAT or GitHub App
-      # token with read access to exasol-labs/preprocessor-framework). When the
-      # secret is not configured, skip the framework-dependent check cleanly so
-      # the pipeline stays green — the release-package build (release.yml) is
-      # stdlib-only and validates the artifacts independently.
       - name: Install the framework package and test dependencies
-        env:
-          FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
-        run: |
-          if [ -z "$FRAMEWORK_TOKEN" ]; then
-            echo "::warning title=Gates did not run::FRAMEWORK_TOKEN is not set, so the index drift check and the no-database gates were SKIPPED. This job is green because nothing ran, not because anything passed."
-            {
-              echo "## :warning: Static gates did not run"
-              echo
-              echo "\`FRAMEWORK_TOKEN\` is not configured, so this job installed nothing and"
-              echo "checked nothing. A green tick here means **no gate ran** — index drift,"
-              echo "sha256, object inventory and layout conformance are all unverified."
-              echo
-              echo "Removing this gating is tracked in RELEASING.md § When the framework repo goes public."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "SKIP=1" >> "$GITHUB_ENV"
-            exit 0
-          fi
-          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" -r requirements-test.txt
+        run: pip install -r requirements-test.txt
 
       # scripts/generate_index.py owns the stamping convention (library_version
       # from ./VERSION, source.ref = v<VERSION>); --check regenerates with those
       # same values and fails on any drift, so the writer and the check can never
       # diverge. Do NOT hand-edit registry/index.json — run the writer.
       - name: Check registry/index.json is in sync
-        if: env.SKIP != '1'
         run: python scripts/generate_index.py --check
 
       # The whole no-database suite: every module's declared [[objects]]
@@ -111,7 +74,6 @@ jobs:
       # so a conformance gate added under tests/ is picked up here by default
       # instead of only in the docker-Exasol job.
       - name: Run the no-database gates (inventory, sha256, layout conformance)
-        if: env.SKIP != '1'
         run: python -m pytest tests/ -v
 
   # ---------------------------------------------------------------------------
@@ -131,31 +93,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Needs the private framework package (see the drift-check note). Skips the
-      # DB-backed module tests cleanly when FRAMEWORK_TOKEN is not configured.
       - name: Install the framework package and test dependencies
-        env:
-          FRAMEWORK_TOKEN: ${{ secrets.FRAMEWORK_TOKEN }}
-        run: |
-          if [ -z "$FRAMEWORK_TOKEN" ]; then
-            echo "::warning title=Module tests did not run::FRAMEWORK_TOKEN is not set, so no module test ran against a database. This job is green because nothing ran, not because anything passed."
-            {
-              echo "## :warning: Module tests did not run"
-              echo
-              echo "\`FRAMEWORK_TOKEN\` is not configured, so no docker Exasol was started and"
-              echo "no module's \`tests/\` executed."
-              echo
-              echo "Removing this gating is tracked in RELEASING.md § When the framework repo goes public."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "SKIP=1" >> "$GITHUB_ENV"
-            exit 0
-          fi
-          pip install "preprocessor-framework @ git+https://x-access-token:${FRAMEWORK_TOKEN}@github.com/exasol-labs/preprocessor-framework.git@${FRAMEWORK_REF}" -r requirements-test.txt
+        run: pip install -r requirements-test.txt
 
       # Start the Exasol database container — same image and flags the
       # framework repo's own CI uses.
       - name: Start Exasol docker-db
-        if: env.SKIP != '1'
         run: |
           docker run -d \
             --name exasol \
@@ -165,7 +108,6 @@ jobs:
 
       # Poll until the database is ready to accept connections.
       - name: Wait for Exasol to be ready
-        if: env.SKIP != '1'
         run: |
           python - <<'EOF'
           import time, sys
@@ -198,7 +140,6 @@ jobs:
 
       # Run every module's tests/ plus the top-level scaffolding tests.
       - name: Run pytest
-        if: env.SKIP != '1'
         env:
           EXASOL_DSN: "localhost:8563"
           EXASOL_USER: sys

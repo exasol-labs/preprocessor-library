@@ -13,7 +13,7 @@
 
 https://github.com/user-attachments/assets/001fc2dd-3bc8-4d96-964c-0a33e7919077
 
-> Don't see the video? [Watch the demo](https://github.com/exasol-labs/preprocessor-framework/blob/main/demo/Preprocessor_demo.mp4).
+> Don't see the video? [Watch the demo](https://github.com/user-attachments/assets/088eea8b-20c6-4e8a-928d-9560c3305060).
 
 
 Pick one from the catalog below and install it in a single statement — then, if

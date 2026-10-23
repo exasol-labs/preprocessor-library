@@ -5,7 +5,7 @@
 #   PREPROC INSTALL MODULE <name> FROM 'bucketfs:<CONN>/preproc-lib-<ver>.tar.gz' ...
 #
 # The build is STDLIB-ONLY (it never installs or imports the framework), so it
-# runs green while BOTH repos stay private — no token, no public repo. It runs:
+# needs no framework install or token. It runs:
 #   * on every push / PR  -> build + upload the tarball as a downloadable CI
 #                            artifact (validates the package on every change)
 #   * on a v* tag         -> additionally attach the tarball to the GitHub Release
