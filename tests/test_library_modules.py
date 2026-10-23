@@ -240,7 +240,16 @@ def test_ci_workflow_checks_index_and_inventory_sync():
     combined = "\n".join(f.read_text(encoding="utf-8") for f in workflow_files)
 
     assert "exasol/docker-db" in combined, "CI must run module tests against a docker Exasol"
-    assert "preprocessor-framework" in combined, "CI must install the framework package"
+    requirements = (_REPO_ROOT / "requirements-test.txt").read_text(encoding="utf-8")
+    assert combined.count("run: pip install -r requirements-test.txt") == 2, (
+        "both CI jobs must install the shared test requirements"
+    )
+    assert "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@main" in requirements, (
+        "the shared requirements must install the public framework"
+    )
+    assert "FRAMEWORK_TOKEN" not in combined and "env.SKIP" not in combined, (
+        "public CI checks must not depend on a private-repository token"
+    )
     assert "pytest" in combined, "CI must run the module tests via pytest"
     assert "index_drift" in combined or "registry/index.json" in combined, (
         "CI must regenerate/drift-check registry/index.json"

@@ -10,16 +10,11 @@ entry pointing at it.
 Everything below needs the `preprocessor-framework` package: `preproc module
 validate` is its CLI, and `scripts/generate_index.py` imports
 `preproc.module.registry` (deliberately — it is the same generator CI runs, not
-a reimplementation that could drift from it). Install it once:
+a reimplementation that could drift from it). Install the test dependencies,
+including the framework from its public GitHub repository:
 
 ```bash
-pip install "preprocessor-framework @ git+https://github.com/exasol-labs/preprocessor-framework.git@main"
-# or, from a local checkout you also work on:
-pip install -e ../preprocessor-framework
-# or, without installing at all:
-export PYTHONPATH=<checkout>/src
-
-pip install -r requirements-test.txt        # the test suite's own dependencies
+pip install -r requirements-test.txt
 ```
 
 Then, from the root of THIS repo:
